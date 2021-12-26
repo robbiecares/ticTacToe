@@ -1,19 +1,20 @@
 const gameBoard = (() => {
   // Stores game state data.
 
-    const boardState = [];
-    
-    function createBoard() {
-      // Creates an empty boardstate.
-      for (i = 0; i <= 2; i++) {
-        let row = []  
-        for (j = 0; j <= 2; j++) {
-          let tile = undefined
-          row.push(tile)  
-        }
-      boardState.push(row)
+  const boardState = [];
+  
+  function createBoard() {
+    // Creates an empty boardstate.
+    for (i = 0; i <= 2; i++) {
+      let row = []  
+      for (j = 0; j <= 2; j++) {
+        let tile = undefined
+        row.push(tile)  
       }
+    boardState.push(row)
+    }
   }
+
 
   function isFull() {
     // Returns 'true' if all items in the board state have a value (i.e. the gameboard is full).
@@ -30,12 +31,73 @@ const gameBoard = (() => {
     return true
   }
 
-    return {
-      createBoard,
-      boardState,
-      isFull
-    };
-  })();
+
+  function checkHorizontalWin() {
+    // Checks if any row of the board contains a set of three symbols from the same player.
+
+    let win = false 
+
+    for (i = 0; i < boardState.length; i++) {
+      let row = boardState[i]
+      if (row[0] && row.every(tile => tile === row[0])) {
+        win = true
+        break;
+      }
+    }
+    return win
+  }
+
+
+  function checkVerticalWin() {
+    // Checks if any column of the board contains a set of three symbols from the same player.
+
+    let win = false 
+
+    for (i = 0; i < boardState.length; i++) {
+      let column = []
+      for (j = 0; j < boardState.length; j++) {
+          column.push(boardState[j][i])
+      }
+      if (column[0] && column.every(tile => tile === column[0])) {
+        win = true
+        break      
+    }
+  }  
+    return win
+  }
+
+
+  function checkDiagonalWin() {
+    // Checks if any diagonal of the board contains a set of three symbols from the same player.
+
+    let win = false 
+    const center = boardState[1][1]
+
+    if (center) {
+      if (boardState[0][0] === center && boardState[2][2] === center) {
+        win = true
+      } else if (boardState[0][2] === center && boardState[2][0] === center) {
+        win = true
+      }
+    } 
+    return win
+  }
+
+
+  function checkWinConditions() {
+    // Checks board state for any set of three characters in a row.
+    
+    return (checkHorizontalWin() || checkVerticalWin() || checkDiagonalWin())
+
+  }
+
+  return {
+    createBoard,
+    boardState,
+    isFull,
+    checkWinConditions
+  };
+})();
 
 const displayController = (() => {
   // Houses all functions related to creating and updating the UI.
@@ -101,16 +163,17 @@ const displayController = (() => {
     if (!this.innerHTML) {
       gameBoard.boardState[row][column] = activePlayer.symbol
       displayController.updateBoard()
-    }
 
-    // checks win conditions
-    if (gameBoard.isFull()) {
-      console.log('it\'s a tie')
-    } else {
-      // udpate active player
-      [activePlayer, inactivePlayer] = [inactivePlayer, activePlayer]
+      // checks win conditions
+      if (gameBoard.isFull()) {
+        console.log('it\'s a tie')
+      } else if (gameBoard.checkWinConditions()) {
+        console.log(`${activePlayer.name} wins!`)
+      } else {
+        // udpate active player
+        [activePlayer, inactivePlayer] = [inactivePlayer, activePlayer]
+      }
     }
-
   }
 
 
