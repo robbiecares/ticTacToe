@@ -19,16 +19,18 @@ const gameBoard = (() => {
   function isFull() {
     // Returns 'true' if all items in the board state have a value (i.e. the gameboard is full).
     
-    for (i = 0; i <= 2; i++) {
-      let row = boardState[i]
+    let full = true
+
+    for (i = 0; i <= 2; i++) check: {
       for (j = 0; j <= 2; j++) {
-        let tile = row[i]
-        if (tile === undefined) {
-          return false
+        if (!boardState[i][j]) {
+          full = false
+          break check
         }
       }
     }
-    return true
+    
+    return full
   }
 
 
