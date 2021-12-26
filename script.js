@@ -99,7 +99,7 @@ const displayController = (() => {
 
     // confirms tile is empty before updating boardstate
     if (!this.innerHTML) {
-      gameBoard.boardState[row][column] = 'j'
+      gameBoard.boardState[row][column] = activePlayer.symbol
       displayController.updateBoard()
     }
 
@@ -108,7 +108,7 @@ const displayController = (() => {
       console.log('it\'s a tie')
     } else {
       // udpate active player
-      console.log('next players turn')
+      [activePlayer, inactivePlayer] = [inactivePlayer, activePlayer]
     }
 
   }
@@ -172,13 +172,16 @@ const player = (name, symbol) => {
 const game = (() => {
   // initializes and runs a game (this is 'main').
 
-  // creates a new board datastructure & displays an empty board
+  // creates a new gameboard data structure & displays an empty board
   gameBoard.createBoard()
   displayController.createBoard()
  
   displayController.activateTiles()
 
-  // console.log(tiles)
+  // create players 
+  activePlayer = player('Rob', 'X')
+  inactivePlayer = player('John', 'O')
+  
 
 })();
 
