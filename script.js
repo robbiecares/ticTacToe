@@ -1,28 +1,43 @@
 const gameBoard = (() => {
-  // Stores game state data.
+  // Stores game board state data.
 
   const boardState = [];
-  
+
   function createBoard() {
-    // Creates an empty boardstate.
+    // Creates an empty datastructure to represent the game's board state.
+
     for (i = 0; i <= 2; i++) {
       let row = []  
       for (j = 0; j <= 2; j++) {
-        let tile = undefined
-        row.push(tile)  
+        let space = undefined
+        row.push(space)  
       }
     boardState.push(row)
     }
   }
 
 
+  function updateBoard(row, column, symbol) {
+    // Verifies a board space is undefined, then updates it.
+    
+    if (!boardState[row][column]) {
+      boardState[row][column] = symbol
+    }    
+  }
+
+
+  function resetBoard() {
+    boardState.length = 0
+  }
+
+
   function isFull() {
-    // Returns 'true' if all items in the board state have a value (i.e. the gameboard is full).
+    // Returns 'true' if all spaces in the board state have a value (i.e. the gameboard is full).
     
     let full = true
 
-    for (i = 0; i <= 2; i++) check: {
-      for (j = 0; j <= 2; j++) {
+    for (i = 0; i < boardState.length; i++) check: {
+      for (j = 0; j < boardState.length; j++) {
         if (!boardState[i][j]) {
           full = false
           break check
@@ -31,27 +46,36 @@ const gameBoard = (() => {
     }
     
     return full
+
+    // idea: alternate implementation - concat all boardstate elements and make one check using an array method like 'every'
+    // note: function no longer used due to implementation of 'turn' variable
   }
 
 
-  function checkHorizontalWin() {
-    // Checks if any row of the board contains a set of three symbols from the same player.
+  function _checkSet(set, symbol = set[0]) {
+    // Returns true if a provided set of elements are all the same.
+
+    return (symbol && set.every(space => space === symbol))
+  }
+
+
+  function _checkHorizontalWin() {
+    // Checks if any row on the board contains a set of three symbols from the same player.
 
     let win = false 
 
     for (i = 0; i < boardState.length; i++) {
-      let row = boardState[i]
-      if (row[0] && row.every(tile => tile === row[0])) {
-        win = true
-        break;
+      win = _checkSet(boardState[i])
+      if (win) {
+        break
       }
     }
     return win
   }
 
 
-  function checkVerticalWin() {
-    // Checks if any column of the board contains a set of three symbols from the same player.
+  function _checkVerticalWin() {
+    // Checks if any column on the board contains a set of three symbols from the same player.
 
     let win = false 
 
@@ -60,27 +84,40 @@ const gameBoard = (() => {
       for (j = 0; j < boardState.length; j++) {
           column.push(boardState[j][i])
       }
-      if (column[0] && column.every(tile => tile === column[0])) {
-        win = true
-        break      
-    }
-  }  
+      win = _checkSet(column)
+      if (win) {
+        break
+      }
+    }  
     return win
   }
 
 
-  function checkDiagonalWin() {
-    // Checks if any diagonal of the board contains a set of three symbols from the same player.
+  function _checkDiagonalWin() {
+    // Checks if either diagonal set on the board contains a set of three symbols from the same player.
 
     let win = false 
     const center = boardState[1][1]
 
     if (center) {
-      if (boardState[0][0] === center && boardState[2][2] === center) {
-        win = true
-      } else if (boardState[0][2] === center && boardState[2][0] === center) {
-        win = true
+
+      const diagonals = [
+        [boardState[0][0], center, boardState[2][2]],
+        [boardState[0][2], center, boardState[2][0]]
+      ]
+      
+      for (i = 0; i < diagonals.length; i++) {
+        win = _checkSet(diagonals[i], center)
+        if (win) {
+          break
+        }
       }
+      
+      // if (boardState[0][0] === center && boardState[2][2] === center) {
+      //   win = true
+      // } else if (boardState[0][2] === center && boardState[2][0] === center) {
+      //   win = true
+      // }
     } 
     return win
   }
@@ -89,14 +126,15 @@ const gameBoard = (() => {
   function checkWinConditions() {
     // Checks board state for any set of three characters in a row.
     
-    return (checkHorizontalWin() || checkVerticalWin() || checkDiagonalWin())
+    return (_checkHorizontalWin() || _checkVerticalWin() || _checkDiagonalWin())
 
   }
 
   return {
     createBoard,
-    boardState,
-    isFull,
+    updateBoard,
+    resetBoard,
+    // isFull,
     checkWinConditions
   };
 })();
@@ -104,156 +142,158 @@ const gameBoard = (() => {
 const displayController = (() => {
   // Houses all functions related to creating and updating the UI.
   
+  const newGameBtn = document.getElementById('reset')
+  newGameBtn.addEventListener('click', resetGame)
+  
   const boardDiv = document.getElementById('board-anchor')
-  // const tiles = document.querySelectorAll('.board-tile')
+  
+  // collection of all spaces on the board display
+  let boardSpaces = undefined
+  
+  const modal = {
+    base: document.getElementById('modal'),
+    closeBtn: document.getElementById('modal-close'),
+    text: document.getElementById('modal-text'),
+  }
+  modal.closeBtn.addEventListener('click', () => modal.base.style.display = "none")
 
+  
   function createBoard() {
-    // Creates a grid of DOM elements & assign values to each cell based values of gameBoard array.
+    // Creates a grid of DOM elements.
 
-    let rowIndex = 0
-      gameBoard.boardState.forEach(row => {
-          let rowDiv = document.createElement('div')
-          rowDiv.classList.add('board-row')
-          rowDiv.setAttribute('data-row-index', rowIndex++)
-          
-          let tileIndex = 0
-          // ***I don't use tile as a var here. Can I refactor this to remove it?
-          row.forEach(tile => {
-              let tileDiv = document.createElement('div')
-              tileDiv.classList.add('board-tile')
-              tileDiv.setAttribute('data-tile-index', tileIndex++)
-              tileDiv.innerHTML = ''
-              rowDiv.appendChild(tileDiv)
-          })
-          boardDiv.appendChild(rowDiv)
-      });
+    for (rowIndex = 0;rowIndex <= 2; rowIndex++) {
+      let rowDiv = document.createElement('div')
+      rowDiv.classList.add('board-row')
+      rowDiv.setAttribute('data-row-index', rowIndex)
+      
+      for (columnIndex = 0;columnIndex <= 2; columnIndex++) {
+        let boardSpaceDiv = document.createElement('div')
+        boardSpaceDiv.classList.add('board-space')
+        boardSpaceDiv.setAttribute('data-column-index', columnIndex)
+        rowDiv.appendChild(boardSpaceDiv)
+      }
+      boardDiv.appendChild(rowDiv)
+      
+      // updates the parent variable after spaces are created
+      boardSpaces = document.querySelectorAll('.board-space')
+    };
   } 
 
 
-  function updateBoard() {
-    // Updates board at the end of a turn.
-    
-    // ***why can't I refactor this to be in the scope of display controller?
-    const tiles = document.querySelectorAll('.board-tile')
+  function resetGame() {
+    // Clears gamestate and display data, then sets up a new game.
 
-    tiles.forEach(tile => {
-      const row =  Number(tile.parentElement.getAttribute('data-row-index'))
-      const column = Number(tile.getAttribute('data-tile-index'))
-      const currentValue = gameBoard.boardState[row][column]
-      if (currentValue !== undefined) {
-        tile.innerHTML = currentValue
-      }
-    })
+    gameBoard.resetBoard()
+    boardDiv.innerHTML = ''
+    game.setupGame()
   }
 
 
-  function activateTiles() {
-    // Makes board tiles clickable.
+  function activateSpaces() {
+    // Adds turn event listeners to spaces.
     
-    const tiles = document.querySelectorAll('.board-tile')
-    tiles.forEach(tile => tile.addEventListener('click', takeTurn))
+    boardSpaces.forEach(space => space.addEventListener('click', game.takeTurn))
   }
 
 
-  function takeTurn() {
-    // Responds to a click on a tile during an active game.
+  function deactivateSpaces() {
+    // Removes turn event listener from spaces.
     
-    const row =  Number(this.parentElement.getAttribute('data-row-index'))
-    const column = Number(this.getAttribute('data-tile-index'))
-
-    // confirms tile is empty before updating boardstate
-    if (!this.innerHTML) {
-      gameBoard.boardState[row][column] = activePlayer.symbol
-      displayController.updateBoard()
-
-      // checks win conditions
-      if (gameBoard.isFull()) {
-        console.log('it\'s a tie')
-      } else if (gameBoard.checkWinConditions()) {
-        console.log(`${activePlayer.name} wins!`)
-      } else {
-        // udpate active player
-        [activePlayer, inactivePlayer] = [inactivePlayer, activePlayer]
-      }
-    }
-  }
-
-
-  function addPlayerSymbol() {
-    // Fills emtpy tiles with a symbol.
-    
-    const row =  Number(this.parentElement.getAttribute('data-row-index'))
-    const column = Number(this.getAttribute('data-tile-index'))
-
-    if (!this.innerHTML) {
-      gameBoard.boardState[row][column] = 'j'
-    }
+    boardSpaces.forEach(space => space.removeEventListener('click', game.takeTurn))
   }
 
   
   function confirmPlayers() {
     // Creates player objects based on user's input.
-    
-    xPlayerForm = document.getElementById('x-player-form')
-    oPlayerForm = document.getElementById('o-player-form')
 
-    xPlayerForm.addEventListener('submit', retrievePlayerData)
-    // oPlayerForm.addEventListener('submit', retrievePlayerData)
-    
-    xPlayer = player(xPlayerForm.value, 'X')
-    // oPlayer = player(PlayerDiv.value, 'O')
+    const xPlayerData = document.getElementById('x-player-name')
+    const oPlayerData = document.getElementById('o-player-name')
 
-    return xPlayer
+    // idea: move parsing of player data into player function to avoid repetition of 'get attribute'
+    const activePlayer = player(xPlayerData.value || xPlayerData.getAttribute('data-symbol'), xPlayerData.getAttribute('data-symbol'))
+    const inactivePlayer = player(oPlayerData.value || oPlayerData.getAttribute('data-symbol'), oPlayerData.getAttribute('data-symbol'))
 
+    return [activePlayer, inactivePlayer]
   }
-
-
-  function retrievePlayerData(e) {
-    // Scrub data from player input.
-    
-    const formData = new FormData(this)
-
-    return formData.entries()
-
-  }
-
 
   return {
     createBoard,
-    activateTiles,
-    addPlayerSymbol,
-    updateBoard,
-    confirmPlayers
+    confirmPlayers,
+    modal,
+    activateSpaces,
+    deactivateSpaces
     };
 })();
 
 const player = (name, symbol) => {
-  // Creates a player for the gdame.
+  // Creates a player for the game.
 
   // tba
     return {name, symbol};
   };
 
 const game = (() => {
-  // initializes and runs a game (this is 'main').
+  // Initializes and runs a game.
 
-  // creates a new gameboard data structure & displays an empty board
-  gameBoard.createBoard()
-  displayController.createBoard()
- 
-  displayController.activateTiles()
+  const modal = displayController.modal
+  
+  // initialize player variables
+  let [activePlayer, inactivePlayer] = [undefined, undefined]
 
-  // create players 
-  activePlayer = player('Rob', 'X')
-  inactivePlayer = player('John', 'O')
+  // initialize a turn counter
+  let turns = 0
+  
   
 
+  function takeTurn() {
+    // Responds to a click on a space during an active game.
+    
+    const row =  Number(this.parentElement.getAttribute('data-row-index'))
+    const column = Number(this.getAttribute('data-column-index'))
+
+    // confirms the space is empty before updating the board state
+    if (!this.innerHTML) {
+
+      gameBoard.updateBoard(row, column, activePlayer.symbol)
+      this.innerHTML = activePlayer.symbol
+      turns++
+
+      // checks for win condition
+      if (turns > 4 && gameBoard.checkWinConditions()) {
+          modal.base.style.display = "flex"
+          modal.text.innerHTML = `${activePlayer.name} wins!`
+          displayController.deactivateSpaces()
+
+      // checks for tie
+      } else if (turns === 9) {
+          modal.base.style.display = "flex"
+          modal.text.innerHTML = 'it\'s a tie'
+      
+      // passes the turn
+      } else {
+          // udpate active player
+          [activePlayer, inactivePlayer] = [inactivePlayer, activePlayer]
+      }
+    }
+  }
+
+
+  function setupGame() {
+    // Creates a new gameboard data structure & displays an empty board.
+   
+    gameBoard.createBoard();
+    displayController.createBoard();
+    [activePlayer, inactivePlayer] = displayController.confirmPlayers();
+    displayController.activateSpaces();
+    turns = 0
+  }
+
+  return {
+    setupGame,
+    takeTurn,
+    activePlayer,
+  }
 })();
 
 
-
-// ***notes about UI setup***
-// num of human players
-// player names
-// X or O?
-// desired number of rounds (with a limit)
+game.setupGame()

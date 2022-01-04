@@ -11,22 +11,34 @@
     <header></header>
     <div id='content'>
         <div id='controls'>
-            <div id='x-player'>
-                <form id='x-player-form'></form>
-                    <label for='x-player-name'></label>
-                    <input type="text" id='x-player-name' name='x-player-name' form='x-player-form' placeholder="X Player Name">
-                    <button type='submit' form='x-player-form'>Confirm</button>
-                </form>
+            <div id='x-player-data' class='player-details'>
+                <label for='x-player-name'></label>
+                <input type="text" id='x-player-name' placeholder="X Player Name" data-symbol='X'>
             </div>
-            <button id='reset' class='btn'>Reset</button>
-            <div id='oPlayer'>
-                <input type="text" placeholder="O Player Name">
-                <button>Confirm</button>
+            <button id='reset' class='btn'>New Game</button>
+            <div id='o-player-data' class='player-details'>
+                <label for='o-player-name'></label>
+                <input type="text" id='o-player-name' placeholder="O Player Name" data-symbol='O'>
+                <!-- <div>
+                    <label for='o-player-name'>Human Player:</label>
+                    <input type="checkbox" id='o-player-type' checked>
+                </div> -->
+                
             </div>    
         </div>
         <div id='board-anchor'></div>
     </div>
     <footer><a target='_blank' href='https://github.com/robbiecares/ticTacToe'>Source</a></footer>
+    
+    <div id='modal'>
+        <div id='modal-content'>
+            <span id="modal-close">&times;</span>
+            <div id='modal-msg'>
+                <div id='modal-text'></div>
+            </div>
+        </div>
+    </div>
+
     <script src='script.js'></script>
 </body>
 </html>
