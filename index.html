@@ -11,20 +11,40 @@
     <header></header>
     <div id='content'>
         <div id='controls'>
-            <div id='x-player-data' class='player-details'>
-                <label for='x-player-name'></label>
-                <input type="text" id='x-player-name' placeholder="X Player Name" data-symbol='X'>
+            <div class='player-data'>
+                <form id='x-player-data' class='player-details' name='xPlayerData' data-symbol='X'>
+                    <legend>X Player</legend>
+                    <input type="text" placeholder="Player Name" name='name'>
+                    <div class='player-type'>
+                        <div>
+                            <label for='human'>Human:</label>
+                            <input type="radio" id='human' name='type' value='human' checked>
+                        </div>
+                        <div>
+                            <label for='AI'>AI:</label>
+                            <input type="radio" id='AI' name='type' value='AI'>
+                        </div>
+                    </div>
+                </form>
             </div>
             <button id='reset' class='btn'>New Game</button>
-            <div id='o-player-data' class='player-details'>
-                <label for='o-player-name'></label>
-                <input type="text" id='o-player-name' placeholder="O Player Name" data-symbol='O'>
-                <!-- <div>
-                    <label for='o-player-name'>Human Player:</label>
-                    <input type="checkbox" id='o-player-type' checked>
-                </div> -->
-                
-            </div>    
+            
+            <div class='player-data'>
+                <form id='o-player-data' class='player-details' name='oPlayerData' data-symbol='O'>
+                    <legend>O Player</legend>
+                    <input type="text" placeholder="Player Name" name='name'>
+                    <div class='player-type'>
+                        <div>
+                            <label for='human'>Human:</label>
+                            <input type="radio" id='human' name='type' value='human' checked>
+                        </div>
+                        <div>
+                            <label for='AI'>AI:</label>
+                            <input type="radio" id='AI' name='type' value='AI'>
+                        </div>
+                    </div>
+                </form>    
+            </div>
         </div>
         <div id='board-anchor'></div>
     </div>
