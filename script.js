@@ -31,29 +31,8 @@ const gameBoard = (() => {
   }
 
 
-  function isFull() {
-    // Returns 'true' if all spaces in the board state have a value (i.e. the gameboard is full).
-    
-    let full = true
-
-    for (i = 0; i < boardState.length; i++) check: {
-      for (j = 0; j < boardState.length; j++) {
-        if (!boardState[i][j]) {
-          full = false
-          break check
-        }
-      }
-    }
-    
-    return full
-
-    // idea: alternate implementation - concat all boardstate elements and make one check using an array method like 'every'
-    // note: function no longer used due to implementation of 'turn' variable
-  }
-
-
   function _checkSet(set, symbol = set[0]) {
-    // Returns true if a provided set of elements are all the same.
+    // Returns true if a provided set of elements all have the same value.
 
     return (symbol && set.every(space => space === symbol))
   }
@@ -134,7 +113,6 @@ const gameBoard = (() => {
     createBoard,
     updateBoard,
     resetBoard,
-    // isFull,
     checkWinConditions
   };
 })();
@@ -189,10 +167,19 @@ const displayController = (() => {
   }
 
 
+  function updateBoard(element, symbol) {
+    // Adds the active player's symbol to the board display.
+
+    if (!element.innerHTML) {
+      element.innerHTML = symbol
+    }
+  }
+
+
   function activateSpaces() {
     // Adds turn event listeners to spaces.
     
-    boardSpaces.forEach(space => space.addEventListener('click', game.takeTurn))
+    boardSpaces.forEach(space => space.addEventListener('click', game.humanTakeTurn))
   }
 
 
@@ -202,18 +189,39 @@ const displayController = (() => {
     boardSpaces.forEach(space => space.removeEventListener('click', game.takeTurn))
   }
 
-  
+
+  function getBoardSpaceElement(row, column) {
+    // Returns the DOM element for the provided row and column.
+
+    return boardDiv.children[row].children[column]
+  }
+
+
   function confirmPlayers() {
     // Creates player objects based on user's input.
 
-    const xPlayerData = document.getElementById('x-player-name')
-    const oPlayerData = document.getElementById('o-player-name')
+    const activePlayer = _parsePlayerData(document.xPlayerData)
+    activePlayer.element.classList.add('active-player')
+    
+    const inactivePlayer = _parsePlayerData(document.oPlayerData)
+    inactivePlayer.element.classList.remove('active-player')
 
-    // idea: move parsing of player data into player function to avoid repetition of 'get attribute'
-    const activePlayer = player(xPlayerData.value || xPlayerData.getAttribute('data-symbol'), xPlayerData.getAttribute('data-symbol'))
-    const inactivePlayer = player(oPlayerData.value || oPlayerData.getAttribute('data-symbol'), oPlayerData.getAttribute('data-symbol'))
+
 
     return [activePlayer, inactivePlayer]
+  }
+
+
+  function _parsePlayerData(form) {
+    // extract player data from page from.
+
+    const name = form.name.value || form.dataset.symbol
+    const symbol = form.dataset.symbol
+    const type = form.type.value
+    const element = form
+
+    return player(name, symbol, type, element)
+
   }
 
   return {
@@ -221,15 +229,16 @@ const displayController = (() => {
     confirmPlayers,
     modal,
     activateSpaces,
-    deactivateSpaces
+    deactivateSpaces,
+    getBoardSpaceElement,
+    updateBoard
     };
 })();
 
-const player = (name, symbol) => {
+const player = (name, symbol, type, element) => {
   // Creates a player for the game.
 
-  // tba
-    return {name, symbol};
+    return {name, symbol, type, element};
   };
 
 const game = (() => {
@@ -242,41 +251,6 @@ const game = (() => {
 
   // initialize a turn counter
   let turns = 0
-  
-  
-
-  function takeTurn() {
-    // Responds to a click on a space during an active game.
-    
-    const row =  Number(this.parentElement.getAttribute('data-row-index'))
-    const column = Number(this.getAttribute('data-column-index'))
-
-    // confirms the space is empty before updating the board state
-    if (!this.innerHTML) {
-
-      gameBoard.updateBoard(row, column, activePlayer.symbol)
-      this.innerHTML = activePlayer.symbol
-      turns++
-
-      // checks for win condition
-      if (turns > 4 && gameBoard.checkWinConditions()) {
-          modal.base.style.display = "flex"
-          modal.text.innerHTML = `${activePlayer.name} wins!`
-          displayController.deactivateSpaces()
-
-      // checks for tie
-      } else if (turns === 9) {
-          modal.base.style.display = "flex"
-          modal.text.innerHTML = 'it\'s a tie'
-      
-      // passes the turn
-      } else {
-          // udpate active player
-          [activePlayer, inactivePlayer] = [inactivePlayer, activePlayer]
-      }
-    }
-  }
-
 
   function setupGame() {
     // Creates a new gameboard data structure & displays an empty board.
@@ -284,16 +258,165 @@ const game = (() => {
     gameBoard.createBoard();
     displayController.createBoard();
     [activePlayer, inactivePlayer] = displayController.confirmPlayers();
+
     displayController.activateSpaces();
     turns = 0
   }
 
-  return {
-    setupGame,
-    takeTurn,
-    activePlayer,
+
+  function main() {
+    // Continues the game until a win condition exists or the ninth turn is completed.
+
+    setupGame()
+
+    // let keepgoing = true
+    
+    // while (keepgoing) {
+      
+    //   let row = undefined
+    //   let column = undefined
+    //   let displaySpace = undefined
+
+    //   if (activePlayer.type === 'AI')
+    //     chooseSpaceAI()
+    //     // confirm boardspace and display element
+    //     [row, column] = [...chooseSpaceAI()]
+    //     displaySpace = displayController.getBoardSpaceElement(row, column)
+    // }
+
   }
+
+
+  function takeTurn() {
+    // Controls the the flow of the info needed for a turn.
+
+
+    // initialize coordinates for the current turn  
+    let [row, column] = [undefined, undefined]
+    let displayElement = undefined
+
+    // determine turn coordinates (human and pc)
+    while (!displayElement) {
+
+      // confirms coordindates & display element for an AI player
+      if (activePlayer.type === 'AI') {
+        setTimeout(function() {
+          row, column = chooseSpaceAI()
+        }, 1500)
+        displayElement = displayController.getBoardSpaceElement(row, column)
+      }  
+    }
+  
+  // determine DOM element (human and pc)
+  
+
+  // update boardstate
+  gameBoard.updateBoard(row, column, activePlayer.symbol)
+
+  // udpate display
+  displayElement.innerHTML = activePlayer.symbol
+
+  // increment turns
+  turns++
+
+  // check gamestatus
+  reviewGameStatus()
+}
+
+
+  function chooseSpaceAI() {
+    // Sets the coordinates of an available boardspace for an AI player.
+
+    // const options = [[0,0], [0,1], [1,0], [2,2]]
+    const options = [2,2]
+    
+    return options
+  }
+
+
+  function humanTakeTurn(e) {
+    // Sets the coordinates of the choosen boardspace for a human player.
+
+    if (activePlayer.type === 'human') {
+      const symbol = activePlayer.symbol
+      const row =  Number(this.parentElement.getAttribute('data-row-index'))
+      const column = Number(this.getAttribute('data-column-index'))
+      // const displayElement = e.target
+
+      // update data structure and display
+      gameBoard.updateBoard(row, column, symbol)
+      displayController.updateBoard(e.target, symbol)
+
+      // check for end conditions
+      reviewGameStatus()
+
+      if (activePlayer.type === 'AI') {
+        aITakeTurn()
+      }
+
+    }
+  }
+
+
+  function aITakeTurn() {
+    // Sets the coordinates of the choosen boardspace for a human player.
+
+    setTimeout(function() {
+      if (activePlayer.type === 'AI') {
+        const symbol = activePlayer.symbol
+        // const row =  Number(this.parentElement.getAttribute('data-row-index'))
+        // const column = Number(this.getAttribute('data-column-index'))
+        const row =  2
+        const column = 2
+        const displayElement = displayController.getBoardSpaceElement(row, column)
+
+        // update data structure and display
+        gameBoard.updateBoard(row, column, symbol)
+        displayController.updateBoard(displayElement, symbol)
+
+        // check for end conditions
+        reviewGameStatus()
+
+        if (activePlayer.type === 'AI') {
+          aITakeTurn()
+        }
+      }
+    }, 1000)
+  }
+
+
+  function reviewGameStatus() {
+    // checks for win condition
+    if (turns > 3 && gameBoard.checkWinConditions()) {
+      keepgoing = false
+      modal.base.style.display = "flex"
+      modal.text.innerHTML = `${activePlayer.name} wins!`
+      displayController.deactivateSpaces()
+
+    // checks for tie
+    } else if (turns === 8) {
+      keepgoing = false
+      modal.base.style.display = "flex"
+      modal.text.innerHTML = 'it\'s a tie'
+    
+    // passes the turn
+    } else {
+      // udpate active player
+      [activePlayer, inactivePlayer] = [inactivePlayer, activePlayer]
+      inactivePlayer.element.classList.remove('active-player')
+      activePlayer.element.classList.add('active-player')
+      turns++
+    }
+  }
+
+
+return {
+  main,
+  setupGame,
+  takeTurn,
+  humanTakeTurn,
+}
 })();
 
 
-game.setupGame()
+game.main()
