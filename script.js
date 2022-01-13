@@ -109,11 +109,32 @@ const gameBoard = (() => {
 
   }
 
+  function chooseRandomSpace() {
+    // Returns the index of an undefined space within the boardstate.
+
+    const availableSpaces = []
+
+    for (i = 0; i <= 2; i++) {
+      let row = boardState[i]
+      for (j = 0; j <= 2; j++) {
+        let space = row[j]
+        if (!space) {
+          availableSpaces.push([i, j])
+        }
+      }
+    }
+    const randInt = Math.floor(Math.random() * availableSpaces.length)
+
+    return availableSpaces[randInt]
+  }
+
+
   return {
     createBoard,
     updateBoard,
     resetBoard,
-    checkWinConditions
+    checkWinConditions,
+    chooseRandomSpace
   };
 })();
 
@@ -261,77 +282,47 @@ const game = (() => {
 
     displayController.activateSpaces();
     turns = 0
-  }
-
-
-  function main() {
-    // Continues the game until a win condition exists or the ninth turn is completed.
-
-    setupGame()
-
-    // let keepgoing = true
-    
-    // while (keepgoing) {
-      
-    //   let row = undefined
-    //   let column = undefined
-    //   let displaySpace = undefined
-
-    //   if (activePlayer.type === 'AI')
-    //     chooseSpaceAI()
-    //     // confirm boardspace and display element
-    //     [row, column] = [...chooseSpaceAI()]
-    //     displaySpace = displayController.getBoardSpaceElement(row, column)
-    // }
-
-  }
-
-
-  function takeTurn() {
-    // Controls the the flow of the info needed for a turn.
-
-
-    // initialize coordinates for the current turn  
-    let [row, column] = [undefined, undefined]
-    let displayElement = undefined
-
-    // determine turn coordinates (human and pc)
-    while (!displayElement) {
-
-      // confirms coordindates & display element for an AI player
-      if (activePlayer.type === 'AI') {
-        setTimeout(function() {
-          row, column = chooseSpaceAI()
-        }, 1500)
-        displayElement = displayController.getBoardSpaceElement(row, column)
-      }  
+    if (activePlayer.type === 'AI') {
+      aITakeTurn()
     }
-  
-  // determine DOM element (human and pc)
-  
-
-  // update boardstate
-  gameBoard.updateBoard(row, column, activePlayer.symbol)
-
-  // udpate display
-  displayElement.innerHTML = activePlayer.symbol
-
-  // increment turns
-  turns++
-
-  // check gamestatus
-  reviewGameStatus()
-}
-
-
-  function chooseSpaceAI() {
-    // Sets the coordinates of an available boardspace for an AI player.
-
-    // const options = [[0,0], [0,1], [1,0], [2,2]]
-    const options = [2,2]
-    
-    return options
   }
+
+
+//   function takeTurn() {
+//     // Controls the the flow of the info needed for a turn.
+
+
+//     // initialize coordinates for the current turn  
+//     let [row, column] = [undefined, undefined]
+//     let displayElement = undefined
+
+//     // determine turn coordinates (human and pc)
+//     while (!displayElement) {
+
+//       // confirms coordindates & display element for an AI player
+//       if (activePlayer.type === 'AI') {
+//         setTimeout(function() {
+//           row, column = chooseSpaceAI()
+//         }, 1500)
+//         displayElement = displayController.getBoardSpaceElement(row, column)
+//       }  
+//     }
+  
+//   // determine DOM element (human and pc)
+  
+
+//   // update boardstate
+//   gameBoard.updateBoard(row, column, activePlayer.symbol)
+
+//   // udpate display
+//   displayElement.innerHTML = activePlayer.symbol
+
+//   // increment turns
+//   turns++
+
+//   // check gamestatus
+//   reviewGameStatus()
+// }
 
 
   function humanTakeTurn(e) {
@@ -348,9 +339,9 @@ const game = (() => {
       displayController.updateBoard(e.target, symbol)
 
       // check for end conditions
-      reviewGameStatus()
+      let gameOver = reviewGameStatus()
 
-      if (activePlayer.type === 'AI') {
+      if (!gameOver && activePlayer.type === 'AI') {
         aITakeTurn()
       }
 
@@ -359,64 +350,73 @@ const game = (() => {
 
 
   function aITakeTurn() {
-    // Sets the coordinates of the choosen boardspace for a human player.
+    // Process for an AI to choose a board space, update the board & check the game's end conditions.
+    
+    let row =  undefined;
+    let column = undefined;
 
-    setTimeout(function() {
-      if (activePlayer.type === 'AI') {
-        const symbol = activePlayer.symbol
-        // const row =  Number(this.parentElement.getAttribute('data-row-index'))
-        // const column = Number(this.getAttribute('data-column-index'))
-        const row =  2
-        const column = 2
+    if (activePlayer.type === 'AI') {
+      setTimeout(function() {
+        
+        [row, column] = gameBoard.chooseRandomSpace()
         const displayElement = displayController.getBoardSpaceElement(row, column)
 
         // update data structure and display
-        gameBoard.updateBoard(row, column, symbol)
-        displayController.updateBoard(displayElement, symbol)
+        gameBoard.updateBoard(row, column, activePlayer.symbol)
+        displayController.updateBoard(displayElement, activePlayer.symbol)
 
         // check for end conditions
-        reviewGameStatus()
+        let gameOver = reviewGameStatus()
 
-        if (activePlayer.type === 'AI') {
+        if (!gameOver && activePlayer.type === 'AI') {
           aITakeTurn()
         }
-      }
-    }, 1000)
+      }, 1500)
+    }
   }
 
 
   function reviewGameStatus() {
+    // Returns true if the game's win/tie conditions have been met.
+
+    let gameOver = undefined
+
     // checks for win condition
     if (turns > 3 && gameBoard.checkWinConditions()) {
-      keepgoing = false
+      gameOver = true
       modal.base.style.display = "flex"
       modal.text.innerHTML = `${activePlayer.name} wins!`
       displayController.deactivateSpaces()
 
     // checks for tie
     } else if (turns === 8) {
-      keepgoing = false
+      gameOver = true
       modal.base.style.display = "flex"
       modal.text.innerHTML = 'it\'s a tie'
+      displayController.deactivateSpaces()
     
     // passes the turn
     } else {
       // udpate active player
       [activePlayer, inactivePlayer] = [inactivePlayer, activePlayer]
+      
+      // idea: I could use the toggle ability below
       inactivePlayer.element.classList.remove('active-player')
       activePlayer.element.classList.add('active-player')
       turns++
     }
+    return gameOver
   }
 
+  return {
+    setupGame,
+    humanTakeTurn,
+  }
 
-return {
-  main,
-  setupGame,
-  takeTurn,
-  humanTakeTurn,
-}
 })();
 
 
-game.main()
+game.setupGame()
+
+// bugs:
+// clicking a boardspace after a tie activates the modal again
