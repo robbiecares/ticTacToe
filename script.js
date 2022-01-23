@@ -142,17 +142,16 @@ const displayController = (() => {
   // Houses all functions related to creating and updating the UI.
   
   const newGameBtn = document.getElementById('reset')
-  newGameBtn.addEventListener('click', resetGame)
-  
   const boardDiv = document.getElementById('board-anchor')
   
   // collection of all spaces on the board display
   let boardSpaces = undefined
   
+  // modal to display outcome of game
   const modal = {
     base: document.getElementById('modal'),
     closeBtn: document.getElementById('modal-close'),
-    text: document.getElementById('modal-text'),
+    text: document.getElementById('modal-text')
   }
   modal.closeBtn.addEventListener('click', () => modal.base.style.display = "none")
 
@@ -179,15 +178,6 @@ const displayController = (() => {
   } 
 
 
-  function resetGame() {
-    // Clears gamestate and display data, then sets up a new game.
-
-    gameBoard.resetBoard()
-    boardDiv.innerHTML = ''
-    game.setupGame()
-  }
-
-
   function updateBoard(element, symbol) {
     // Adds the active player's symbol to the board display.
 
@@ -201,13 +191,6 @@ const displayController = (() => {
     // Adds turn event listeners to spaces.
     
     boardSpaces.forEach(space => space.addEventListener('click', game.humanTakeTurn))
-  }
-
-
-  function deactivateSpaces() {
-    // Removes turn event listener from spaces.
-    
-    boardSpaces.forEach(space => space.removeEventListener('click', game.takeTurn))
   }
 
 
@@ -226,8 +209,6 @@ const displayController = (() => {
     
     const inactivePlayer = _parsePlayerData(document.oPlayerData)
     inactivePlayer.element.classList.remove('active-player')
-
-
 
     return [activePlayer, inactivePlayer]
   }
@@ -249,23 +230,41 @@ const displayController = (() => {
     createBoard,
     confirmPlayers,
     modal,
+    boardDiv,
+    newGameBtn,
     activateSpaces,
-    deactivateSpaces,
     getBoardSpaceElement,
-    updateBoard
+    updateBoard,
     };
 })();
 
 const player = (name, symbol, type, element) => {
   // Creates a player for the game.
 
-    return {name, symbol, type, element};
-  };
+  const toggleForm = (state) => {
+
+    const elements = element.elements
+
+    for (i = 0; i < elements.length; i++) {
+        elements[i].disabled = state;
+    }
+  }
+  
+  return {name, symbol, type, element, toggleForm}
+  }
+
+// player.prototype.toggleForm = function(state) {
+//   // Enables or disables a form.
+  
+//   const elements = this.elements
+  
+//   for (i = 0; i < elements.len; i++) {
+//       elements[i].readOnly = state;
+//     }
+// }
 
 const game = (() => {
   // Initializes and runs a game.
-
-  const modal = displayController.modal
   
   // initialize player variables
   let [activePlayer, inactivePlayer] = [undefined, undefined]
@@ -273,144 +272,145 @@ const game = (() => {
   // initialize a turn counter
   let turns = 0
 
+  // initilize a flag to determine when the game should end
+  let resetGameFlag = undefined
+  
+  // initilize a flag to determine when the game should end
+  let activeGame = undefined
+
+  // initialize the modal object to display game results
+  const modal = displayController.modal
+
+  // set event for new game button
+  displayController.newGameBtn.addEventListener('click', requestReset)
+
+
   function setupGame() {
     // Creates a new gameboard data structure & displays an empty board.
    
     gameBoard.createBoard();
     displayController.createBoard();
-    [activePlayer, inactivePlayer] = displayController.confirmPlayers();
-
     displayController.activateSpaces();
+    [activePlayer, inactivePlayer] = displayController.confirmPlayers();
     turns = 0
+    activeGame = true
     if (activePlayer.type === 'AI') {
       aITakeTurn()
     }
   }
 
 
-//   function takeTurn() {
-//     // Controls the the flow of the info needed for a turn.
-
-
-//     // initialize coordinates for the current turn  
-//     let [row, column] = [undefined, undefined]
-//     let displayElement = undefined
-
-//     // determine turn coordinates (human and pc)
-//     while (!displayElement) {
-
-//       // confirms coordindates & display element for an AI player
-//       if (activePlayer.type === 'AI') {
-//         setTimeout(function() {
-//           row, column = chooseSpaceAI()
-//         }, 1500)
-//         displayElement = displayController.getBoardSpaceElement(row, column)
-//       }  
-//     }
-  
-//   // determine DOM element (human and pc)
-  
-
-//   // update boardstate
-//   gameBoard.updateBoard(row, column, activePlayer.symbol)
-
-//   // udpate display
-//   displayElement.innerHTML = activePlayer.symbol
-
-//   // increment turns
-//   turns++
-
-//   // check gamestatus
-//   reviewGameStatus()
-// }
-
-
   function humanTakeTurn(e) {
-    // Sets the coordinates of the choosen boardspace for a human player.
+    // Uses a humnan player's space choice to update the game.
+  
+    if (!turns) {
+      activePlayer.toggleForm(true)
+      inactivePlayer.toggleForm(true)
+    }
 
-    if (activePlayer.type === 'human') {
-      const symbol = activePlayer.symbol
+    if (activeGame && activePlayer.type === 'human') {
       const row =  Number(this.parentElement.getAttribute('data-row-index'))
       const column = Number(this.getAttribute('data-column-index'))
-      // const displayElement = e.target
-
-      // update data structure and display
-      gameBoard.updateBoard(row, column, symbol)
-      displayController.updateBoard(e.target, symbol)
-
-      // check for end conditions
-      let gameOver = reviewGameStatus()
-
-      if (!gameOver && activePlayer.type === 'AI') {
-        aITakeTurn()
-      }
-
+      updateBoard(row, column, e.target)
     }
   }
 
 
   function aITakeTurn() {
-    // Process for an AI to choose a board space, update the board & check the game's end conditions.
+    // Uses the AI's space choice to update the game.
     
+    if (!turns) {
+      activePlayer.toggleForm(true)
+      inactivePlayer.toggleForm(true)
+    }
+
     let row =  undefined;
     let column = undefined;
-
-    if (activePlayer.type === 'AI') {
-      setTimeout(function() {
-        
-        [row, column] = gameBoard.chooseRandomSpace()
-        const displayElement = displayController.getBoardSpaceElement(row, column)
-
-        // update data structure and display
-        gameBoard.updateBoard(row, column, activePlayer.symbol)
-        displayController.updateBoard(displayElement, activePlayer.symbol)
-
-        // check for end conditions
-        let gameOver = reviewGameStatus()
-
-        if (!gameOver && activePlayer.type === 'AI') {
-          aITakeTurn()
-        }
-      }, 1500)
-    }
+  
+    setTimeout(function() {
+      [row, column] = gameBoard.chooseRandomSpace()
+      const element = displayController.getBoardSpaceElement(row, column)
+      updateBoard(row, column, element)
+    }, 1000)
   }
 
+  function updateBoard(row, column, element) {
+    // Handles the updates to the baordstate and display, then checks for the game's end conditions.
+
+    // update data structure and display
+    gameBoard.updateBoard(row, column, activePlayer.symbol)
+    displayController.updateBoard(element, activePlayer.symbol)
+
+    // check for end conditions
+    reviewGameStatus()
+
+    if (activeGame && activePlayer.type === 'AI') {
+      aITakeTurn()
+
+    }
+  }
 
   function reviewGameStatus() {
     // Returns true if the game's win/tie conditions have been met.
 
-    let gameOver = undefined
-
+    // handles a reset request made during AI turn
+    if (resetGameFlag) {
+      activeGame = false
+      resetGame()
+    
     // checks for win condition
-    if (turns > 3 && gameBoard.checkWinConditions()) {
-      gameOver = true
+    } else if (turns > 3 && gameBoard.checkWinConditions()) {
+      activeGame = false
       modal.base.style.display = "flex"
       modal.text.innerHTML = `${activePlayer.name} wins!`
-      displayController.deactivateSpaces()
 
     // checks for tie
     } else if (turns === 8) {
-      gameOver = true
+      activeGame = false
       modal.base.style.display = "flex"
       modal.text.innerHTML = 'it\'s a tie'
-      displayController.deactivateSpaces()
+    }
     
     // passes the turn
-    } else {
+    if (activeGame) {
       // udpate active player
       [activePlayer, inactivePlayer] = [inactivePlayer, activePlayer]
       
-      // idea: I could use the toggle ability below
       inactivePlayer.element.classList.remove('active-player')
       activePlayer.element.classList.add('active-player')
-      turns++
+      turns++  
+    } else {
+      activePlayer.toggleForm(false)
+      inactivePlayer.toggleForm(false)
     }
-    return gameOver
   }
+
+
+function requestReset() {
+  // Sets resetGame flag to enable a reset routine at the end of the current turn.
+  if (!activeGame) {
+    resetGame()
+  } else {
+    resetGameFlag = true
+  }
+}
+
+
+function resetGame() {
+  // Clears gamestate and display data, then sets up a new game.
+
+  gameBoard.resetBoard()
+  displayController.boardDiv.innerHTML = ''
+  resetGameFlag = false
+
+  game.setupGame()
+  
+}
 
   return {
     setupGame,
     humanTakeTurn,
+    requestReset,
   }
 
 })();
@@ -418,5 +418,11 @@ const game = (() => {
 
 game.setupGame()
 
-// bugs:
-// clicking a boardspace after a tie activates the modal again
+// notes:
+// check what can be factored out or pushed up in the hierarchy of the game object
+// lock player forms while game is active
+// create better AI logic
+
+
+// stopped at: after reset of game where human x player won, 
+// X player (human) placed an O symbol on board
