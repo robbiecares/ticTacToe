@@ -18,11 +18,14 @@ const gameBoard = (() => {
 
 
   function updateBoard(row, column, symbol) {
-    // Verifies a board space is undefined, then updates it.
+    // Verifies a board space is undefined then updates the boardstate with the given symbol. Returns false if boardstate is not undefined, otherwise returns true.
     
-    if (!boardState[row][column]) {
+    let occupied = boardState[row][column]
+
+    if (!occupied) {
       boardState[row][column] = symbol
     }    
+    return Boolean(boardState[row][column])
   }
 
 
@@ -109,6 +112,17 @@ const gameBoard = (() => {
 
   }
 
+
+  function checkSetMajority(set) {
+    // confirms the majority symbol of a given set.
+
+    return (symbol && set.every(space => space === symbol))
+    
+    return false
+  
+  }
+
+
   function chooseRandomSpace() {
     // Returns the index of an undefined space within the boardstate.
 
@@ -179,7 +193,7 @@ const displayController = (() => {
 
 
   function updateBoard(element, symbol) {
-    // Adds the active player's symbol to the board display.
+    // Adds the provided symbol to the matching space of the board display.
 
     if (!element.innerHTML) {
       element.innerHTML = symbol
@@ -253,15 +267,6 @@ const player = (name, symbol, type, element) => {
   return {name, symbol, type, element, toggleForm}
   }
 
-// player.prototype.toggleForm = function(state) {
-//   // Enables or disables a form.
-  
-//   const elements = this.elements
-  
-//   for (i = 0; i < elements.len; i++) {
-//       elements[i].readOnly = state;
-//     }
-// }
 
 const game = (() => {
   // Initializes and runs a game.
@@ -302,17 +307,20 @@ const game = (() => {
 
   function humanTakeTurn(e) {
     // Uses a humnan player's space choice to update the game.
-  
+
+    // prevents changes to player data during an active game.
     if (!turns) {
       activePlayer.toggleForm(true)
       inactivePlayer.toggleForm(true)
     }
 
+    
     if (activeGame && activePlayer.type === 'human') {
       const row =  Number(this.parentElement.getAttribute('data-row-index'))
       const column = Number(this.getAttribute('data-column-index'))
       updateBoard(row, column, e.target)
     }
+  
   }
 
 
@@ -335,18 +343,19 @@ const game = (() => {
   }
 
   function updateBoard(row, column, element) {
-    // Handles the updates to the baordstate and display, then checks for the game's end conditions.
+    // Handles the updates to the boardstate and display, then checks for the game's end conditions.
 
     // update data structure and display
-    gameBoard.updateBoard(row, column, activePlayer.symbol)
-    displayController.updateBoard(element, activePlayer.symbol)
+    if (gameBoard.updateBoard(row, column, activePlayer.symbol)) {
+      displayController.updateBoard(element, activePlayer.symbol)
 
-    // check for end conditions
-    reviewGameStatus()
+      // check for end conditions
+      reviewGameStatus()
 
-    if (activeGame && activePlayer.type === 'AI') {
-      aITakeTurn()
+      if (activeGame && activePlayer.type === 'AI') {
+        aITakeTurn()
 
+      }
     }
   }
 
@@ -420,9 +429,5 @@ game.setupGame()
 
 // notes:
 // check what can be factored out or pushed up in the hierarchy of the game object
-// lock player forms while game is active
 // create better AI logic
-
-
-// stopped at: after reset of game where human x player won, 
-// X player (human) placed an O symbol on board
+// may need to create getter for activePlayer to use in gameboard functions for AI moves
