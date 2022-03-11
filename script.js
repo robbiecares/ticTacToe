@@ -178,11 +178,11 @@ const gameBoard = (() => {
           coords = [coord, i]          
           break
         case dSets:
-          if (coord === 0 || !i) {
+          if (coord === 1 || !i) {
             coords = [coord, coord]
-          } else {        
-            coords = [coord, Math.abs(coord - 2)]
-          }
+          } else {
+            coords = (!coord) ? [coord, 2] : [coord, 0]
+          }          
           break
       }
       return coords
@@ -282,6 +282,7 @@ const displayController = (() => {
 
     if (!element.innerHTML) {
       element.innerHTML = symbol
+      element.removeEventListener('click', game.humanTakeTurn)
     }
   }
 
@@ -490,6 +491,14 @@ const game = (() => {
       activeGame = true
       activePlayer.protectForm(true)
       inactivePlayer.protectForm(true)
+
+
+      // highlight active player data
+      inactivePlayer.element.classList.remove('active-player')
+      activePlayer.element.classList.add('active-player')
+
+
+
       if (e.target === displayController.startBtn && activePlayer.type === 'AI') {
         aITakeTurn()
       }
@@ -503,9 +512,15 @@ const game = (() => {
     gameBoard.resetBoard()
     displayController.boardDiv.innerHTML = ''
     resetGameFlag = false
+
+    // unlocks player data forms
     if (typeof(activePlayer) !== "undefined") {
       activePlayer.protectForm(false)
-      inactivePlayer.protectForm(false) 
+      inactivePlayer.protectForm(false)
+      activePlayer.element.classList.remove('active-player')
+
+
+
     }
     game.setupGame()
     
@@ -539,11 +554,4 @@ game.setupGame()
 // notes:
 // check what can be factored out or pushed up in the hierarchy of the game object
 
-// bug: active player O does not reset
-
-// can't reproduce:
-// bug: when clicking new game, active player should always be X player
-
-
 // stopped at:
-// bug: x did not take make the 2nd diagonal block
