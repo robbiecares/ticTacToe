@@ -416,6 +416,11 @@ function resetGame() {
   
 }
 
+
+  function getTurn() {
+    return turns
+  }
+
   return {
     setupGame,
     humanTakeTurn,
@@ -429,5 +434,6 @@ game.setupGame()
 
 // notes:
 // check what can be factored out or pushed up in the hierarchy of the game object
-// create better AI logic
-// may need to create getter for activePlayer to use in gameboard functions for AI moves
+
+// stopped at:
+  // working on strategy for opening move
