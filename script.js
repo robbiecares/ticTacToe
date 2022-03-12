@@ -554,4 +554,7 @@ game.setupGame()
 // notes:
 // check what can be factored out or pushed up in the hierarchy of the game object
 
+// bug: player data forms "shake"
+
 // stopped at:
+
