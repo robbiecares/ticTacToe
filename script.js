@@ -212,13 +212,6 @@ const gameBoard = (() => {
   function determineAIMove() {
     // Returns the best space for the AI.
 
-    // create better AI logic
-      // could I win this turn?
-        //  check all sets
-      // could I lose next turn?
-        //  check all sets
-      // where could I block a potential set for my opponent?
-
     const aPlayer = game.getActivePlayerSymbol()
     const iPlayer = game.getInactivePlayerSymbol()
 
@@ -559,9 +552,8 @@ game.setupGame()
 // notes:
 // check what can be factored out or pushed up in the hierarchy of the game object
 
-// stopped at:
-  // working on strategy for opening move
 // bug: player data forms "shake"
 
 // stopped at:
+  // working on strategy for opening move
 
