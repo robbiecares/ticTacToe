@@ -208,15 +208,63 @@ const gameBoard = (() => {
     return winningSpace
   }
 
+  function _assessBoard(turn) {
+    // Determines strategy for opening moves of game.
+
+    let bestMove = undefined
+
+    function _getRandomCornerIndex() {
+      // Returns 0 or 2 at random.
+      
+      let i = Math.floor(Math.random() * 2)
+      if (i === 1) {
+        i = 2
+      }
+      return i
+    }
+    
+    switch (turn) {
+      case 0:
+        // turn 0 - take a corner
+        bestMove = [_getRandomCornerIndex(), _getRandomCornerIndex()];
+        break;
+      case 1:
+        // turn 1 - take center, or take corner if no center
+        bestMove = (!boardState[1][1]) ? [1, 1] : [_getRandomCornerIndex(), _getRandomCornerIndex()];
+        break;
+      // case 2:
+      //   // turn 2 - if center is taken, take opposite corner, else increase lead with a d or v
+      //   if (boardState[1][1]) {
+      //     // find opposite corner
+      //   } else {
+      //     // 
+      //   }
+      //   break;
+    } 
+    
+    
+    // turn 3 - if you have center, do not increase lead with a d
+
+    return bestMove
+  }
+
 
   function determineAIMove() {
     // Returns the best space for the AI.
 
     const aPlayer = game.getActivePlayerSymbol()
     const iPlayer = game.getInactivePlayerSymbol()
+    const turn = game.getTurn()
 
-    
-    return _checkForPotentialWin(aPlayer) || _checkForPotentialWin(iPlayer) || _chooseRandomSpace()
+    let boardSpace = undefined
+
+    if (turn > 1) {
+      boardSpace = _checkForPotentialWin(aPlayer) || _checkForPotentialWin(iPlayer)
+    }
+    if (!boardSpace) {
+      boardSpace = _assessBoard(turn) || _chooseRandomSpace()
+    }
+    return boardSpace
   }
 
   return {
@@ -224,7 +272,7 @@ const gameBoard = (() => {
     updateBoard,
     resetBoard,
     checkForWin,
-    determineAIMove
+    determineAIMove,
   };
 })();
 
@@ -407,9 +455,9 @@ const game = (() => {
     let column = undefined;
   
     setTimeout(function() {
-      [row, column] = gameBoard.determineAIMove()
-      const element = displayController.getBoardSpaceElement(row, column)
-      updateBoard(row, column, element)
+      [row, column] = gameBoard.determineAIMove();
+      const element = displayController.getBoardSpaceElement(row, column);
+      updateBoard(row, column, element);
     }, 1000)
   }
 
@@ -542,12 +590,14 @@ const game = (() => {
     humanTakeTurn,
     requestReset,
     getActivePlayerSymbol,
-    getInactivePlayerSymbol
+    getInactivePlayerSymbol,
+    getTurn
   }
 })();
 
 
 game.setupGame()
+
 
 // notes:
 // check what can be factored out or pushed up in the hierarchy of the game object
@@ -555,5 +605,5 @@ game.setupGame()
 // bug: player data forms "shake"
 
 // stopped at:
-  // working on strategy for opening move
+  // working on strategy for opening moves
 
