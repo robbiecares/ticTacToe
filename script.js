@@ -34,7 +34,7 @@ const gameBoard = (() => {
   }
 
 
-  function _checkSet(set, symbol = set[0]) {
+  function _confirmThreeInARow(set, symbol = set[0]) {
     // Returns true if a provided set of elements all have the same value.
 
     return (symbol && set.every(space => space === symbol))
@@ -47,7 +47,7 @@ const gameBoard = (() => {
     let win = false 
 
     for (i = 0; i < boardState.length; i++) {
-      win = _checkSet(boardState[i])
+      win = _confirmThreeInARow(boardState[i])
       if (win) {
         break
       }
@@ -57,7 +57,7 @@ const gameBoard = (() => {
 
 
   function _checkVerticalWin() {
-    // Checks if any column on the board contains a set of three symbols from the same player.
+    // Checks if any column of the board contains a set of three symbols from the same player.
 
     let win = false 
 
@@ -66,7 +66,7 @@ const gameBoard = (() => {
       for (j = 0; j < boardState.length; j++) {
           column.push(boardState[j][i])
       }
-      win = _checkSet(column)
+      win = _confirmThreeInARow(column)
       if (win) {
         break
       }
@@ -87,51 +87,62 @@ const gameBoard = (() => {
         [boardState[0][0], center, boardState[2][2]],
         [boardState[0][2], center, boardState[2][0]]
       ]
-      
+
       for (i = 0; i < diagonals.length; i++) {
-        win = _checkSet(diagonals[i], center)
+        win = _confirmThreeInARow(diagonals[i], center)
         if (win) {
           break
         }
       }
-      
-      // if (boardState[0][0] === center && boardState[2][2] === center) {
-      //   win = true
-      // } else if (boardState[0][2] === center && boardState[2][0] === center) {
-      //   win = true
-      // }
     } 
     return win
   }
 
 
-  function checkWinConditions() {
+  function checkForWin() {
     // Checks board state for any set of three characters in a row.
     
-    return (_checkHorizontalWin() || _checkVerticalWin() || _checkDiagonalWin())
-
+    return _checkHorizontalWin() || _checkVerticalWin() || _checkDiagonalWin()
   }
 
 
-  function checkSetMajority(set) {
-    // confirms the majority symbol of a given set.
+  function _getVerticalSets() {
+    // Returns the vertical sets of the boardstate.
 
-    return (symbol && set.every(space => space === symbol))
+    let columns = []
+
+    for (column = 0; column < boardState.length; column++) {
+      let set = []
+      for (row = 0; row < boardState.length; row++) {
+        set.push(boardState[row][column])
+      }
+      columns.push(set)
+    }    
+    return columns
+  }
+
+
+  function _getDiagonalSets() {
+    // Returns the diagonal sets of the boardstate.
     
-    return false
-  
+    const center = boardState[1][1]
+
+    return [
+      [boardState[0][0], center, boardState[2][2]],
+      [boardState[0][2], center, boardState[2][0]]
+    ]
   }
 
 
-  function chooseRandomSpace() {
+  function _chooseRandomSpace() {
     // Returns the index of an undefined space within the boardstate.
 
     const availableSpaces = []
 
-    for (i = 0; i <= 2; i++) {
-      let row = boardState[i]
-      for (j = 0; j <= 2; j++) {
-        let space = row[j]
+    for (i = 0; i < boardState.length; i++) {
+      let row = boardState[i];
+      for (j = 0; j < boardState.length; j++) {
+        let space = row[j];
         if (!space) {
           availableSpaces.push([i, j])
         }
@@ -143,19 +154,93 @@ const gameBoard = (() => {
   }
 
 
+  function _checkForPotentialWin(symbol) {
+    // Checks board state for any potential move that could win the game.
+
+
+    function _confirmTwoOutOfThree(items) {
+      // Returns the index of the undefined element in a set that contains two matching symbols and undefined element.
+  
+      return items.filter(x => x === symbol).length === 2 && items.filter(x => x === undefined).length === 1 ? items.indexOf(undefined) : undefined
+    }
+
+    
+    function _orderCoordinates(set, coord) {
+      // Returns boardspace coordinates based on the set type.
+
+      let coords = undefined
+
+      switch(set) {
+        case boardState:
+          coords = [i, coord]
+          break
+        case vSets:
+          coords = [coord, i]          
+          break
+        case dSets:
+          if (coord === 1 || !i) {
+            coords = [coord, coord]
+          } else {
+            coords = (!coord) ? [coord, 2] : [coord, 0]
+          }          
+          break
+      }
+      return coords
+    }
+
+    // std var
+    let winningSpace = undefined
+    const vSets = _getVerticalSets();
+    const dSets = _getDiagonalSets();
+
+    // Iterates each row, column and diagnoal set of the gameboard and returns the first potential winning space.
+    sets:
+    for (set of [boardState, vSets, dSets]) {        
+      for (i = 0; i < set.length; i++) {
+        // std var for 'true' check
+        let coord = _confirmTwoOutOfThree(set[i]) 
+        if (coord || coord === 0) {
+          winningSpace = _orderCoordinates(set, coord);
+          break sets;
+        }
+      }
+    }
+    return winningSpace
+  }
+
+
+  function determineAIMove() {
+    // Returns the best space for the AI.
+
+    // create better AI logic
+      // could I win this turn?
+        //  check all sets
+      // could I lose next turn?
+        //  check all sets
+      // where could I block a potential set for my opponent?
+
+    const aPlayer = game.getActivePlayerSymbol()
+    const iPlayer = game.getInactivePlayerSymbol()
+
+    
+    return _checkForPotentialWin(aPlayer) || _checkForPotentialWin(iPlayer) || _chooseRandomSpace()
+  }
+
   return {
     createBoard,
     updateBoard,
     resetBoard,
-    checkWinConditions,
-    chooseRandomSpace
+    checkForWin,
+    determineAIMove
   };
 })();
+
 
 const displayController = (() => {
   // Houses all functions related to creating and updating the UI.
   
-  const newGameBtn = document.getElementById('reset')
+  const startBtn = document.getElementById('start')
+  const resetBtn = document.getElementById('reset')
   const boardDiv = document.getElementById('board-anchor')
   
   // collection of all spaces on the board display
@@ -197,6 +282,7 @@ const displayController = (() => {
 
     if (!element.innerHTML) {
       element.innerHTML = symbol
+      element.removeEventListener('click', game.humanTakeTurn)
     }
   }
 
@@ -245,17 +331,19 @@ const displayController = (() => {
     confirmPlayers,
     modal,
     boardDiv,
-    newGameBtn,
+    startBtn,
+    resetBtn,
     activateSpaces,
     getBoardSpaceElement,
     updateBoard,
     };
 })();
 
+
 const player = (name, symbol, type, element) => {
   // Creates a player for the game.
 
-  const toggleForm = (state) => {
+  const protectForm = (state) => {
 
     const elements = element.elements
 
@@ -264,7 +352,7 @@ const player = (name, symbol, type, element) => {
     }
   }
   
-  return {name, symbol, type, element, toggleForm}
+  return {name, symbol, type, element, protectForm}
   }
 
 
@@ -286,8 +374,9 @@ const game = (() => {
   // initialize the modal object to display game results
   const modal = displayController.modal
 
-  // set event for new game button
-  displayController.newGameBtn.addEventListener('click', requestReset)
+  // set events for game buttons
+  displayController.startBtn.addEventListener('click', (e) => {startGame(e)})
+  displayController.resetBtn.addEventListener('click', requestReset)
 
 
   function setupGame() {
@@ -296,26 +385,20 @@ const game = (() => {
     gameBoard.createBoard();
     displayController.createBoard();
     displayController.activateSpaces();
-    [activePlayer, inactivePlayer] = displayController.confirmPlayers();
+    activeGame = false
     turns = 0
-    activeGame = true
-    if (activePlayer.type === 'AI') {
-      aITakeTurn()
-    }
   }
 
 
   function humanTakeTurn(e) {
-    // Uses a humnan player's space choice to update the game.
-
-    // prevents changes to player data during an active game.
+    // Uses a human player's space choice to update the game.
+    
     if (!turns) {
-      activePlayer.toggleForm(true)
-      inactivePlayer.toggleForm(true)
+      startGame(e)
     }
 
-    
     if (activeGame && activePlayer.type === 'human') {
+
       const row =  Number(this.parentElement.getAttribute('data-row-index'))
       const column = Number(this.getAttribute('data-column-index'))
       updateBoard(row, column, e.target)
@@ -326,17 +409,12 @@ const game = (() => {
 
   function aITakeTurn() {
     // Uses the AI's space choice to update the game.
-    
-    if (!turns) {
-      activePlayer.toggleForm(true)
-      inactivePlayer.toggleForm(true)
-    }
 
     let row =  undefined;
     let column = undefined;
   
     setTimeout(function() {
-      [row, column] = gameBoard.chooseRandomSpace()
+      [row, column] = gameBoard.determineAIMove()
       const element = displayController.getBoardSpaceElement(row, column)
       updateBoard(row, column, element)
     }, 1000)
@@ -368,7 +446,7 @@ const game = (() => {
       resetGame()
     
     // checks for win condition
-    } else if (turns > 3 && gameBoard.checkWinConditions()) {
+    } else if (turns > 3 && gameBoard.checkForWin()) {
       activeGame = false
       modal.base.style.display = "flex"
       modal.text.innerHTML = `${activePlayer.name} wins!`
@@ -384,37 +462,82 @@ const game = (() => {
     if (activeGame) {
       // udpate active player
       [activePlayer, inactivePlayer] = [inactivePlayer, activePlayer]
-      
       inactivePlayer.element.classList.remove('active-player')
       activePlayer.element.classList.add('active-player')
       turns++  
     } else {
-      activePlayer.toggleForm(false)
-      inactivePlayer.toggleForm(false)
+      activePlayer.protectForm(false)
+      inactivePlayer.protectForm(false)
     }
   }
 
 
-function requestReset() {
-  // Sets resetGame flag to enable a reset routine at the end of the current turn.
-  if (!activeGame) {
-    resetGame()
-  } else {
-    resetGameFlag = true
-  }
-}
-
-
-function resetGame() {
-  // Clears gamestate and display data, then sets up a new game.
-
-  gameBoard.resetBoard()
-  displayController.boardDiv.innerHTML = ''
-  resetGameFlag = false
-
-  game.setupGame()
+  function requestReset() {
+    // Handles a request to reset the game.
   
-}
+    if (!activeGame || activePlayer.type === 'human') {
+      resetGame()
+    } else {
+      resetGameFlag = true
+    }
+  }
+
+
+  function startGame(e) {
+    // Starts a new game.
+
+    if (!turns) {
+      [activePlayer, inactivePlayer] = displayController.confirmPlayers();
+      activeGame = true
+      activePlayer.protectForm(true)
+      inactivePlayer.protectForm(true)
+
+
+      // highlight active player data
+      inactivePlayer.element.classList.remove('active-player')
+      activePlayer.element.classList.add('active-player')
+
+
+
+      if (e.target === displayController.startBtn && activePlayer.type === 'AI') {
+        aITakeTurn()
+      }
+    }    
+  }
+
+
+  function resetGame() {
+    // Clears gamestate and display data, then sets up a new game.
+
+    gameBoard.resetBoard()
+    displayController.boardDiv.innerHTML = ''
+    resetGameFlag = false
+
+    // unlocks player data forms
+    if (typeof(activePlayer) !== "undefined") {
+      activePlayer.protectForm(false)
+      inactivePlayer.protectForm(false)
+      activePlayer.element.classList.remove('active-player')
+
+
+
+    }
+    game.setupGame()
+    
+  }
+
+  function getActivePlayerSymbol() {
+    // Provides the active player symbol to other functions and objects.
+
+    return activePlayer.symbol
+  }
+
+
+  function getInactivePlayerSymbol() {
+    // Provides the active player symbol to other functions and objects.
+
+    return inactivePlayer.symbol
+  }
 
 
   function getTurn() {
@@ -425,8 +548,9 @@ function resetGame() {
     setupGame,
     humanTakeTurn,
     requestReset,
+    getActivePlayerSymbol,
+    getInactivePlayerSymbol
   }
-
 })();
 
 
@@ -435,5 +559,12 @@ game.setupGame()
 // notes:
 // check what can be factored out or pushed up in the hierarchy of the game object
 
+<<<<<<< HEAD
 // stopped at:
   // working on strategy for opening move
+=======
+// bug: player data forms "shake"
+
+// stopped at:
+
+>>>>>>> dev

@@ -18,8 +18,16 @@ body {
 }
 
 .btn {
-    padding: 1rem;
+    padding: .5rem;
     font-size: 1rem;
+    margin: 1rem;
+}
+
+#btns {
+    display: flex;
+    flex-flow: column;
+    justify-content: stretch;
+    /* border: 1px solid red */
 }
 
 #content {
@@ -32,7 +40,7 @@ body {
 #controls {
     display: flex;
     justify-content: space-around;
-    align-items: center;
+    align-items: stretch;
     /* padding: 1rem; */
     
 }
