@@ -559,12 +559,9 @@ game.setupGame()
 // notes:
 // check what can be factored out or pushed up in the hierarchy of the game object
 
-<<<<<<< HEAD
 // stopped at:
   // working on strategy for opening move
-=======
 // bug: player data forms "shake"
 
 // stopped at:
 
->>>>>>> dev
