@@ -208,7 +208,7 @@ const gameBoard = (() => {
     return winningSpace
   }
 
-  function _assessBoard(turn) {
+  function _assessBoard(turn, symbol) {
     // Determines strategy for opening moves of game.
 
     let bestMove = undefined
@@ -229,17 +229,29 @@ const gameBoard = (() => {
         bestMove = [_getRandomCornerIndex(), _getRandomCornerIndex()];
         break;
       case 1:
-        // turn 1 - take center, or take corner if no center
+        // turn 1 - take center, or take corner if center taken
         bestMove = (!boardState[1][1]) ? [1, 1] : [_getRandomCornerIndex(), _getRandomCornerIndex()];
         break;
-      // case 2:
-      //   // turn 2 - if center is taken, take opposite corner, else increase lead with a d or v
-      //   if (boardState[1][1]) {
-      //     // find opposite corner
-      //   } else {
-      //     // 
-      //   }
-      //   break;
+      case 2:
+        // turn 2 - take opposite corner. If unavailable, take adjacent corner.
+        
+        // confirm coordinates of turn0 move
+        let oppositeCorner = undefined;
+        symbolCheck:
+        for (x = 0; x < boardState.length; x++) {
+          for (y = 0; y < boardState[x].length; y++) {
+            if (boardState[x][y] === symbol) {
+              oppositeCorner = (x === y) ? [Math.abs(x-2), Math.abs(y-2)] : [y, x];
+              break symbolCheck;
+            }
+          }
+        }
+        if (!boardState[oppositeCorner[0]][oppositeCorner[1]]) {
+          bestMove = oppositeCorner
+        } else {
+          // take adjacent corner
+        }
+        break;
     } 
     
     
@@ -262,7 +274,7 @@ const gameBoard = (() => {
       boardSpace = _checkForPotentialWin(aPlayer) || _checkForPotentialWin(iPlayer)
     }
     if (!boardSpace) {
-      boardSpace = _assessBoard(turn) || _chooseRandomSpace()
+      boardSpace = _assessBoard(turn, aPlayer) || _chooseRandomSpace()
     }
     return boardSpace
   }
@@ -603,6 +615,7 @@ game.setupGame()
 // check what can be factored out or pushed up in the hierarchy of the game object
 
 // bug: player data forms "shake"
+// bug: clicking active tile with x player as AI locks the player data. Tile should not be activated at this point.
 
 // stopped at:
   // working on strategy for opening moves
