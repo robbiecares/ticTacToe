@@ -209,53 +209,97 @@ const gameBoard = (() => {
   }
 
   function _assessBoard(turn, symbol) {
-    // Determines strategy for opening moves of game.
+    // Determines strategy for opening moves of the game.
+
+    // todo: 
+    // var to store turn0
+    
+    // func to return current avail corners
+    // func to return random corner
+
 
     let bestMove = undefined
-
-    function _getRandomCornerIndex() {
-      // Returns 0 or 2 at random.
+    let turn0 = undefined
+    const corners = _getAvailableCorners()
       
-      let i = Math.floor(Math.random() * 2)
-      if (i === 1) {
-        i = 2
-      }
-      return i
+    function _getAvailableCorners() {
+      // Return the indices of all availables corner spaces.
+      let indices = [];
+      for (x of [0, 2]) {
+        for (y of [0, 2]) {
+          if (!boardState[x][y]) {
+            indices.push([x, y])
+          };
+        };
+      };
+      return indices
+    };
+
+
+    function _getRandomCorner() {
+      // Returns a random available corner.
+      
+      return corners[Math.floor(Math.random() * corners.length)]
+    };
+  
+
+    function _getOppositeCorner(x, y) {
+      // Returns the corner in same diagnoal as the one provided.
+      return (x === y) ? [Math.abs(x-2), Math.abs(y-2)] : [y, x]
     }
-    
+
+
+    function _findfirstOccurence() {
+      // Returns the coordinates of the first occurence of a given symbol.
+        
+      for (x = 0; x < boardState.length; x++) {
+        for (y = 0; y < boardState[x].length; y++) {
+          if (boardState[x][y] === symbol) {
+            return [x, y]   
+          }
+        }
+      }
+    }
+
+
+    function _getAvailableSides() {
+      // Returns the coordinates of all available 'side' spaces.
+      
+      // for (x of [0, 2]) {
+      //   for (y of [0, 2]) {
+      //   }
+      // }
+    }
+
+
+    function _getRandomSide() {
+      // Returns a random available corner.
+      
+      sides = _getAvailableSides()
+      
+      return sides[Math.floor(Math.random() * sides.length)]
+    };
+
+
     switch (turn) {
       case 0:
         // turn 0 - take a corner
-        bestMove = [_getRandomCornerIndex(), _getRandomCornerIndex()];
+        bestMove = _getRandomCorner()
         break;
       case 1:
         // turn 1 - take center, or take corner if center taken
-        bestMove = (!boardState[1][1]) ? [1, 1] : [_getRandomCornerIndex(), _getRandomCornerIndex()];
+        bestMove = (!boardState[1][1]) ? [1, 1] : _getRandomCorner();
         break;
       case 2:
         // turn 2 - take opposite corner. If unavailable, take adjacent corner.
-        
-        // confirm coordinates of turn0 move
-        let oppositeCorner = undefined;
-        symbolCheck:
-        for (x = 0; x < boardState.length; x++) {
-          for (y = 0; y < boardState[x].length; y++) {
-            if (boardState[x][y] === symbol) {
-              oppositeCorner = (x === y) ? [Math.abs(x-2), Math.abs(y-2)] : [y, x];
-              break symbolCheck;
-            }
-          }
-        }
-        if (!boardState[oppositeCorner[0]][oppositeCorner[1]]) {
-          bestMove = oppositeCorner
-        } else {
-          // take adjacent corner
-        }
+        const turn0 = _findfirstOccurence()
+        bestMove = (corners.length === 2) ? _getRandomCorner() : _getOppositeCorner(...turn0)
         break;
-    } 
+      case 3:
+        // turn 3 - take a side space to force a defensive move.
+        bestMove = _getRandomSide()
+    }  
     
-    
-    // turn 3 - if you have center, do not increase lead with a d
 
     return bestMove
   }
@@ -579,6 +623,7 @@ const game = (() => {
     
   }
 
+
   function getActivePlayerSymbol() {
     // Provides the active player symbol to other functions and objects.
 
@@ -613,10 +658,13 @@ game.setupGame()
 
 // notes:
 // check what can be factored out or pushed up in the hierarchy of the game object
+// ideal function for AI would locate all sets where there is a potential win & place symbol
+  // at intersection of those sets or at a potential blocking location
 
 // bug: player data forms "shake"
 // bug: clicking active tile with x player as AI locks the player data. Tile should not be activated at this point.
 
 // stopped at:
-  // working on strategy for opening moves
+  // working on strategy for opening moves - turn 3
+
 
