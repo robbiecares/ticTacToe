@@ -265,10 +265,15 @@ const gameBoard = (() => {
     function _getAvailableSides() {
       // Returns the coordinates of all available 'side' spaces.
       
-      // for (x of [0, 2]) {
-      //   for (y of [0, 2]) {
-      //   }
-      // }
+      available = []
+
+      for (space of [[0, 1], [1, 0], [1, 2], [2, 1]]) {
+        [x ,y] = space
+        if (!boardState[x][y]) {
+          available.push(space)
+        }
+      }
+      return available
     }
 
 
@@ -299,8 +304,6 @@ const gameBoard = (() => {
         // turn 3 - take a side space to force a defensive move.
         bestMove = _getRandomSide()
     }  
-    
-
     return bestMove
   }
 
@@ -665,6 +668,3 @@ game.setupGame()
 // bug: clicking active tile with x player as AI locks the player data. Tile should not be activated at this point.
 
 // stopped at:
-  // working on strategy for opening moves - turn 3
-
-
