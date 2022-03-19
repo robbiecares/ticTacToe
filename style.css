@@ -62,6 +62,7 @@ body {
 }
 
 .player-details {
+    /* border: 1px solid red; */
     display: flex;
     flex-flow: column;
     font-size: 1rem;
@@ -81,9 +82,9 @@ body {
 }
 
 .active-player {
-    border: 2px solid blue;
+    /* border: 2px solid blue; */
     border-radius: 2rem;
-    outline: 2px solid lightblue;
+    outline: 2px solid blue;
     outline-offset: 2px;
     background-color: lightblue;
 }
