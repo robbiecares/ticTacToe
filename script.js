@@ -268,7 +268,7 @@ const gameBoard = (() => {
       available = []
 
       for (space of [[0, 1], [1, 0], [1, 2], [2, 1]]) {
-        [x ,y] = space
+        let [x ,y] = space
         if (!boardState[x][y]) {
           available.push(space)
         }
@@ -303,6 +303,11 @@ const gameBoard = (() => {
       case 3:
         // turn 3 - take a side space to force a defensive move.
         bestMove = _getRandomSide()
+        break;
+      case 4:
+        // take a corner 
+        bestMove = _getRandomCorner() 
+        break;
     }  
     return bestMove
   }
