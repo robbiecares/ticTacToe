@@ -493,7 +493,7 @@ const game = (() => {
   function humanTakeTurn(e) {
     // Uses a human player's space choice to update the game.
     
-    if (!turns) {
+    if (!turns && xPlayerData.type.value === 'human') {
       startGame(e)
     }
 
@@ -520,6 +520,7 @@ const game = (() => {
     }, 1000)
   }
 
+
   function updateBoard(row, column, element) {
     // Handles the updates to the boardstate and display, then checks for the game's end conditions.
 
@@ -536,6 +537,7 @@ const game = (() => {
       }
     }
   }
+
 
   function reviewGameStatus() {
     // Returns true if the game's win/tie conditions have been met.
@@ -661,10 +663,8 @@ game.setupGame()
 
 // notes:
 // check what can be factored out or pushed up in the hierarchy of the game object
-// ideal function for AI would locate all sets where there is a potential win & place symbol
-  // at intersection of those sets or at a potential blocking location
 
 // bug: player data forms "shake"
-// bug: clicking active tile with x player as AI locks the player data. Tile should not be activated at this point.
+
 
 // stopped at:
