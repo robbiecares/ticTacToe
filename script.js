@@ -34,6 +34,15 @@ const gameBoard = (() => {
   }
 
 
+  function _getRandomElement(iterable) {
+    // Returns a random element from the given iterable.
+
+    const element = Math.floor(Math.random() * iterable.length)
+
+    return iterable[element]
+  }
+
+
   function _confirmThreeInARow(set, symbol = set[0]) {
     // Returns true if a provided set of elements all have the same value.
 
@@ -211,13 +220,6 @@ const gameBoard = (() => {
   function _assessBoard(turn, symbol) {
     // Determines strategy for opening moves of the game.
 
-    // todo: 
-    // var to store turn0
-    
-    // func to return current avail corners
-    // func to return random corner
-
-
     let bestMove = undefined
     let turn0 = undefined
     const corners = _getAvailableCorners()
@@ -233,13 +235,6 @@ const gameBoard = (() => {
         };
       };
       return indices
-    };
-
-
-    function _getRandomCorner() {
-      // Returns a random available corner.
-      
-      return corners[Math.floor(Math.random() * corners.length)]
     };
   
 
@@ -277,36 +272,27 @@ const gameBoard = (() => {
     }
 
 
-    function _getRandomSide() {
-      // Returns a random available corner.
-      
-      sides = _getAvailableSides()
-      
-      return sides[Math.floor(Math.random() * sides.length)]
-    };
-
-
     switch (turn) {
       case 0:
         // turn 0 - take a corner
-        bestMove = _getRandomCorner()
+        bestMove = _getRandomElement(_getAvailableCorners())
         break;
       case 1:
         // turn 1 - take center, or take corner if center taken
-        bestMove = (!boardState[1][1]) ? [1, 1] : _getRandomCorner();
+        bestMove = (!boardState[1][1]) ? [1, 1] : _getRandomElement(_getAvailableCorners());
         break;
       case 2:
         // turn 2 - take opposite corner. If unavailable, take adjacent corner.
         const turn0 = _findfirstOccurence()
-        bestMove = (corners.length === 2) ? _getRandomCorner() : _getOppositeCorner(...turn0)
+        bestMove = (corners.length === 2) ? _getRandomElement(_getAvailableCorners()) : _getOppositeCorner(...turn0)
         break;
       case 3:
         // turn 3 - take a side space to force a defensive move.
-        bestMove = _getRandomSide()
+        bestMove = _getRandomElement(_getAvailableSides())
         break;
       case 4:
         // take a corner 
-        bestMove = _getRandomCorner() 
+        bestMove = _getRandomElement(_getAvailableCorners())
         break;
     }  
     return bestMove
@@ -669,7 +655,7 @@ game.setupGame()
 // notes:
 // check what can be factored out or pushed up in the hierarchy of the game object
 
-// bug: player data forms "shake"
+// todo: improve logic for increasing lead whenever possible (vs taking a simple "random location")
 
 
 // stopped at:
