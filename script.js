@@ -43,75 +43,25 @@ const gameBoard = (() => {
   }
 
 
-  function _confirmThreeInARow(set, symbol = set[0]) {
-    // Returns true if a provided set of elements all have the same value.
+  function checkForWin() {
+    // Returns true if any set in the game contains three matching symbols.
+  
+    let win = false
+    const vSets = _getVerticalSets();
+    const dSets = _getDiagonalSets();
 
-    return (symbol && set.every(space => space === symbol))
-  }
-
-
-  function _checkHorizontalWin() {
-    // Checks if any row on the board contains a set of three symbols from the same player.
-
-    let win = false 
-
-    for (i = 0; i < boardState.length; i++) {
-      win = _confirmThreeInARow(boardState[i])
-      if (win) {
-        break
+    allSets:
+    for (sets of [boardState, vSets, dSets]) {        
+      for (i = 0; i < sets.length; i++) {
+        let set = sets[i]
+        let symbol = set[0]
+        let win = symbol && set.every(space => space === symbol)
+        if (win) {
+          break allSets;
+        }
       }
     }
     return win
-  }
-
-
-  function _checkVerticalWin() {
-    // Checks if any column of the board contains a set of three symbols from the same player.
-
-    let win = false 
-
-    for (i = 0; i < boardState.length; i++) {
-      let column = []
-      for (j = 0; j < boardState.length; j++) {
-          column.push(boardState[j][i])
-      }
-      win = _confirmThreeInARow(column)
-      if (win) {
-        break
-      }
-    }  
-    return win
-  }
-
-
-  function _checkDiagonalWin() {
-    // Checks if either diagonal set on the board contains a set of three symbols from the same player.
-
-    let win = false 
-    const center = boardState[1][1]
-
-    if (center) {
-
-      const diagonals = [
-        [boardState[0][0], center, boardState[2][2]],
-        [boardState[0][2], center, boardState[2][0]]
-      ]
-
-      for (i = 0; i < diagonals.length; i++) {
-        win = _confirmThreeInARow(diagonals[i], center)
-        if (win) {
-          break
-        }
-      }
-    } 
-    return win
-  }
-
-
-  function checkForWin() {
-    // Checks board state for any set of three characters in a row.
-    
-    return _checkHorizontalWin() || _checkVerticalWin() || _checkDiagonalWin()
   }
 
 
@@ -160,6 +110,13 @@ const gameBoard = (() => {
     const randInt = Math.floor(Math.random() * availableSpaces.length)
 
     return availableSpaces[randInt]
+  }
+
+
+  function _confirmPotentialToIncrease(items) {
+    // Returns the index of the first undefined element of a set that contains two undefined spaces and the active player symbol.
+
+    return items.filter(x => x === symbol).length === 1 && items.filter(x => x === undefined).length === 2 ? items.indexOf(undefined) : undefined
   }
 
 
@@ -216,6 +173,7 @@ const gameBoard = (() => {
     }
     return winningSpace
   }
+
 
   function _assessBoard(turn, symbol) {
     // Determines strategy for opening moves of the game.
@@ -655,7 +613,6 @@ game.setupGame()
 // notes:
 // check what can be factored out or pushed up in the hierarchy of the game object
 
-// todo: improve logic for increasing lead whenever possible (vs taking a simple "random location")
-
 
 // stopped at:
+// todo: improve logic for increasing lead whenever possible (vs taking a simple "random location")
