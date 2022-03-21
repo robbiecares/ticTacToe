@@ -2,6 +2,7 @@ const gameBoard = (() => {
   // Stores game board state data.
 
   const boardState = [];
+  let turn0 = undefined
 
   function createBoard() {
     // Creates an empty datastructure to represent the game's board state.
@@ -107,9 +108,7 @@ const gameBoard = (() => {
         }
       }
     }
-    const randInt = Math.floor(Math.random() * availableSpaces.length)
-
-    return availableSpaces[randInt]
+    return _getRandomElement(availableSpaces)
   }
 
 
@@ -175,112 +174,88 @@ const gameBoard = (() => {
   }
 
 
-  function _assessBoard(turn, symbol) {
-    // Determines strategy for opening moves of the game.
-
-    let bestMove = undefined
-    let turn0 = undefined
-    const corners = _getAvailableCorners()
-      
-    function _getAvailableCorners() {
-      // Return the indices of all availables corner spaces.
-      let indices = [];
-      for (x of [0, 2]) {
-        for (y of [0, 2]) {
-          if (!boardState[x][y]) {
-            indices.push([x, y])
-          };
+  function _getAvailableCorners() {
+    // Return the indices of all availables corner spaces.
+    let indices = [];
+    for (x of [0, 2]) {
+      for (y of [0, 2]) {
+        if (!boardState[x][y]) {
+          indices.push([x, y])
         };
       };
-      return indices
     };
-  
-
-    function _getOppositeCorner(x, y) {
-      // Returns the corner in same diagnoal as the one provided.
-      return (x === y) ? [Math.abs(x-2), Math.abs(y-2)] : [y, x]
-    }
+    return indices
+  };
 
 
-    function _findfirstOccurence() {
-      // Returns the coordinates of the first occurence of a given symbol.
-        
-      for (x = 0; x < boardState.length; x++) {
-        for (y = 0; y < boardState[x].length; y++) {
-          if (boardState[x][y] === symbol) {
-            return [x, y]   
-          }
-        }
-      }
-    }
-
-
-    function _getAvailableSides() {
-      // Returns the coordinates of all available 'side' spaces.
-      
-      available = []
-
-      for (space of [[0, 1], [1, 0], [1, 2], [2, 1]]) {
-        let [x ,y] = space
-        if (!boardState[x][y]) {
-          available.push(space)
-        }
-      }
-      return available
-    }
-
-
-    switch (turn) {
-      case 0:
-        // turn 0 - take a corner
-        bestMove = _getRandomElement(_getAvailableCorners())
-        break;
-      case 1:
-        // turn 1 - take center, or take corner if center taken
-        bestMove = (!boardState[1][1]) ? [1, 1] : _getRandomElement(_getAvailableCorners());
-        break;
-      case 2:
-        // turn 2 - take opposite corner. If unavailable, take adjacent corner.
-        const turn0 = _findfirstOccurence()
-        bestMove = (corners.length === 2) ? _getRandomElement(_getAvailableCorners()) : _getOppositeCorner(...turn0)
-        break;
-      case 3:
-        // turn 3 - take a side space to force a defensive move.
-        bestMove = _getRandomElement(_getAvailableSides())
-        break;
-      case 4:
-        // take a corner 
-        bestMove = _getRandomElement(_getAvailableCorners())
-        break;
-    }  
-    return bestMove
+  function _getOppositeCorner(x, y) {
+    // Returns the corner in same diagnoal as the one provided.
+    return (x === y) ? [Math.abs(x-2), Math.abs(y-2)] : [y, x]
   }
 
 
-  function determineAIMove() {
+  function _getAvailableSides() {
+    // Returns the coordinates of all available 'side' spaces.
+    
+    available = []
+
+    for (space of [[0, 1], [1, 0], [1, 2], [2, 1]]) {
+      let [x ,y] = space
+      if (!boardState[x][y]) {
+        available.push(space)
+      }
+    }
+    return available
+  }
+
+
+  function assessBoard() {
     // Returns the best space for the AI.
 
+    let bestMove = undefined
     const aPlayer = game.getActivePlayerSymbol()
     const iPlayer = game.getInactivePlayerSymbol()
     const turn = game.getTurn()
+    const corners = _getAvailableCorners()
 
-    let boardSpace = undefined
-
-    if (turn > 1) {
-      boardSpace = _checkForPotentialWin(aPlayer) || _checkForPotentialWin(iPlayer)
+    if (turn > 2) {
+      bestMove = _checkForPotentialWin(aPlayer) || _checkForPotentialWin(iPlayer)
     }
-    if (!boardSpace) {
-      boardSpace = _assessBoard(turn, aPlayer) || _chooseRandomSpace()
+    if (!bestMove) {  
+      switch (turn) {
+        case 0:
+          // turn 0 - take a corner
+          bestMove = _getRandomElement(corners)
+          turn0 = bestMove
+          break;
+        case 1:
+          // turn 1 - take center, or take corner if center taken
+          bestMove = (!boardState[1][1]) ? [1, 1] : _getRandomElement(corners);
+          break;
+        case 2:
+          // turn 2 - take opposite corner. If unavailable, take adjacent corner.
+          // const turn0 = _findfirstOccurence()
+          bestMove = (corners.length === 2) ? _getRandomElement(corners) : _getOppositeCorner(...turn0)
+          break;
+        case 3:
+          // turn 3 - take a side space to force a defensive move.
+          bestMove = _getRandomElement(_getAvailableSides())
+          break;
+        case 4:
+          // take a corner 
+          bestMove = _getRandomElement(corners)
+          break;
+      }  
     }
-    return boardSpace
-  }
+    return bestMove
+}
 
   return {
     createBoard,
     updateBoard,
     resetBoard,
     checkForWin,
-    determineAIMove,
+    assessBoard,
   };
 })();
 
@@ -442,7 +417,7 @@ const game = (() => {
   function humanTakeTurn(e) {
     // Uses a human player's space choice to update the game.
     
-    if (!turns && xPlayerData.type.value === 'human') {
+    if (!activeGame && xPlayerData.type.value === 'human') {
       startGame(e)
     }
 
@@ -463,7 +438,7 @@ const game = (() => {
     let column = undefined;
   
     setTimeout(function() {
-      [row, column] = gameBoard.determineAIMove();
+      [row, column] = gameBoard.assessBoard();
       const element = displayController.getBoardSpaceElement(row, column);
       updateBoard(row, column, element);
     }, 1000)
@@ -543,12 +518,9 @@ const game = (() => {
       activePlayer.protectForm(true)
       inactivePlayer.protectForm(true)
 
-
       // highlight active player data
       inactivePlayer.element.classList.remove('active-player')
       activePlayer.element.classList.add('active-player')
-
-
 
       if (e.target === displayController.startBtn && activePlayer.type === 'AI') {
         aITakeTurn()
