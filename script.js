@@ -44,28 +44,6 @@ const gameBoard = (() => {
   }
 
 
-  function checkForWin() {
-    // Returns true if any set in the game contains three matching symbols.
-  
-    let win = false
-    const vSets = _getVerticalSets();
-    const dSets = _getDiagonalSets();
-
-    allSets:
-    for (sets of [boardState, vSets, dSets]) {        
-      for (i = 0; i < sets.length; i++) {
-        let set = sets[i]
-        let symbol = set[0]
-        let win = symbol && set.every(space => space === symbol)
-        if (win) {
-          break allSets;
-        }
-      }
-    }
-    return win
-  }
-
-
   function _getVerticalSets() {
     // Returns the vertical sets of the boardstate.
 
@@ -94,83 +72,25 @@ const gameBoard = (() => {
   }
 
 
-  function _chooseRandomSpace() {
-    // Returns the index of an undefined space within the boardstate.
-
-    const availableSpaces = []
-
-    for (i = 0; i < boardState.length; i++) {
-      let row = boardState[i];
-      for (j = 0; j < boardState.length; j++) {
-        let space = row[j];
-        if (!space) {
-          availableSpaces.push([i, j])
-        }
-      }
-    }
-    return _getRandomElement(availableSpaces)
-  }
-
-
-  function _confirmPotentialToIncrease(items) {
-    // Returns the index of the first undefined element of a set that contains two undefined spaces and the active player symbol.
-
-    return items.filter(x => x === symbol).length === 1 && items.filter(x => x === undefined).length === 2 ? items.indexOf(undefined) : undefined
-  }
-
-
-  function _checkForPotentialWin(symbol) {
-    // Checks board state for any potential move that could win the game.
-
-
-    function _confirmTwoOutOfThree(items) {
-      // Returns the index of the undefined element in a set that contains two matching symbols and undefined element.
+  function checkForWin() {
+    // Returns true if any set in the game contains three matching symbols.
   
-      return items.filter(x => x === symbol).length === 2 && items.filter(x => x === undefined).length === 1 ? items.indexOf(undefined) : undefined
-    }
-
-    
-    function _orderCoordinates(set, coord) {
-      // Returns boardspace coordinates based on the set type.
-
-      let coords = undefined
-
-      switch(set) {
-        case boardState:
-          coords = [i, coord]
-          break
-        case vSets:
-          coords = [coord, i]          
-          break
-        case dSets:
-          if (coord === 1 || !i) {
-            coords = [coord, coord]
-          } else {
-            coords = (!coord) ? [coord, 2] : [coord, 0]
-          }          
-          break
-      }
-      return coords
-    }
-
-    // std var
-    let winningSpace = undefined
+    let win = false
     const vSets = _getVerticalSets();
     const dSets = _getDiagonalSets();
 
-    // Iterates each row, column and diagnoal set of the gameboard and returns the first potential winning space.
-    sets:
-    for (set of [boardState, vSets, dSets]) {        
-      for (i = 0; i < set.length; i++) {
-        // std var for 'true' check
-        let coord = _confirmTwoOutOfThree(set[i]) 
-        if (coord || coord === 0) {
-          winningSpace = _orderCoordinates(set, coord);
-          break sets;
+    allSets:
+    for (sets of [boardState, vSets, dSets]) {        
+      for (i = 0; i < sets.length; i++) {
+        let set = sets[i]
+        let symbol = set[0]
+        let win = symbol && set.every(space => space === symbol)
+        if (win) {
+          break allSets;
         }
       }
     }
-    return winningSpace
+    return win
   }
 
 
@@ -216,7 +136,67 @@ const gameBoard = (() => {
     const aPlayer = game.getActivePlayerSymbol()
     const iPlayer = game.getInactivePlayerSymbol()
     const turn = game.getTurn()
+    const vSets = _getVerticalSets();
+    const dSets = _getDiagonalSets();
     const corners = _getAvailableCorners()
+
+    function _checkForPotentialWin(symbol) {
+      // Checks board state for any potential move that could win the game.
+  
+      let winningSpace = undefined
+
+      function _confirmTwoOutOfThree(set) {
+        // Returns the index of the undefined element in a set that contains two matching symbols and undefined element.
+    
+        return set.filter(x => x === symbol).length === 2 && set.filter(x => x === undefined).length === 1 ? set.indexOf(undefined) : undefined
+      }
+
+      // Iterates each row, column and diagnoal set of the gameboard and returns the first potential winning space.
+      allSets:
+      for (sets of [boardState, vSets, dSets]) {        
+        for (i = 0; i < sets.length; i++) {
+          // std var for 'true' check
+          let set = sets[i]
+          let coord = _confirmTwoOutOfThree(set)
+          if (coord || coord === 0) {
+            winningSpace = _orderCoordinates(sets, coord);
+            break allSets;
+          }
+        }
+      }
+      return winningSpace
+    }
+
+
+    function _confirmPotentialToIncrease(set, symbol) {
+      // Returns the index of the first undefined element of a set that contains two undefined elements and the active player symbol.
+  
+      return set.filter(x => x === symbol).length === 1 && set.filter(x => x === undefined).length === 2 ? set.indexOf(undefined) : undefined
+    }
+
+
+    function _orderCoordinates(sets, coord) {
+      // Returns boardspace coordinates based on the set type.
+  
+      let coords = undefined
+  
+      switch(sets) {
+        case boardState:
+          coords = [i, coord]
+          break
+        case vSets:
+          coords = [coord, i]          
+          break
+        case dSets:
+          if (coord === 1 || !i) {
+            coords = [coord, coord]
+          } else {
+            coords = (!coord) ? [coord, 2] : [coord, 0]
+          }          
+          break
+      }
+      return coords
+    }
 
     if (turn > 2) {
       bestMove = _checkForPotentialWin(aPlayer) || _checkForPotentialWin(iPlayer)
@@ -234,7 +214,6 @@ const gameBoard = (() => {
           break;
         case 2:
           // turn 2 - take opposite corner. If unavailable, take adjacent corner.
-          // const turn0 = _findfirstOccurence()
           bestMove = (corners.length === 2) ? _getRandomElement(corners) : _getOppositeCorner(...turn0)
           break;
         case 3:
@@ -245,8 +224,21 @@ const gameBoard = (() => {
           // take a corner 
           bestMove = _getRandomElement(corners)
           break;
-      }  
-    }
+        default:
+          allSets:
+          for (sets of [boardState, vSets, dSets]) {        
+            for (i = 0; i < sets.length; i++) {
+              // std var for 'true' check
+              let set = sets[i]
+              let coord = _confirmPotentialToIncrease(set, aPlayer)
+              if (coord || coord === 0) {
+                bestMove = _orderCoordinates(set, coord);
+                break allSets;
+              }
+            } 
+          }
+        } 
+      }
     return bestMove
 }
 
