@@ -84,7 +84,7 @@ const gameBoard = (() => {
       for (i = 0; i < sets.length; i++) {
         let set = sets[i]
         let symbol = set[0]
-        let win = symbol && set.every(space => space === symbol)
+        win = symbol && set.every(space => space === symbol)
         if (win) {
           break allSets;
         }
@@ -168,10 +168,20 @@ const gameBoard = (() => {
     }
 
 
-    function _confirmPotentialToIncrease(set, symbol) {
-      // Returns the index of the first undefined element of a set that contains two undefined elements and the active player symbol.
-  
-      return set.filter(x => x === symbol).length === 1 && set.filter(x => x === undefined).length === 2 ? set.indexOf(undefined) : undefined
+    function _confirmPotentialToIncrease() {
+      // Returns the index of a random undefined element in a set that contains only the active player's symbol and undefined elements.
+      
+      for (sets of [boardState, vSets, dSets]) {        
+        for (i = 0; i < sets.length; i++) {
+          let set = sets[i]
+          if (set.includes(aPlayer) && !set.includes(iPlayer)) {
+            let coords = Array.from(Array(3).keys())
+            coords.splice(set.indexOf(aPlayer), 1)
+            let coord = _getRandomElement(coords);
+            return _orderCoordinates(sets, coord);
+          }
+        }
+      }
     }
 
 
@@ -199,14 +209,14 @@ const gameBoard = (() => {
     }
 
     if (turn > 2) {
-      bestMove = _checkForPotentialWin(aPlayer) || _checkForPotentialWin(iPlayer)
+      bestMove = _checkForPotentialWin(aPlayer) || _checkForPotentialWin(iPlayer) || _confirmPotentialToIncrease()
     }
     if (!bestMove) {  
       switch (turn) {
         case 0:
           // turn 0 - take a corner
-          bestMove = _getRandomElement(corners)
-          turn0 = bestMove
+          bestMove = _getRandomElement(corners);
+          turn0 = bestMove;
           break;
         case 1:
           // turn 1 - take center, or take corner if center taken
@@ -218,29 +228,32 @@ const gameBoard = (() => {
           break;
         case 3:
           // turn 3 - take a side space to force a defensive move.
-          bestMove = _getRandomElement(_getAvailableSides())
+          bestMove =  _getRandomElement(_getAvailableSides());
+
+          // if opponent has adjacent corners take a side space
+          
+
           break;
         case 4:
           // take a corner 
           bestMove = _getRandomElement(corners)
           break;
         default:
-          allSets:
-          for (sets of [boardState, vSets, dSets]) {        
-            for (i = 0; i < sets.length; i++) {
-              // std var for 'true' check
-              let set = sets[i]
-              let coord = _confirmPotentialToIncrease(set, aPlayer)
-              if (coord || coord === 0) {
-                bestMove = _orderCoordinates(set, coord);
-                break allSets;
+          // take a random space
+          let activateSpaces = []
+          for (x=0; x < boardState.length; x++) {
+            for (y=0; y < boardState[x].length; y++) {
+              let space = boardState[x][y]
+              if (!space)  {
+                activateSpaces.push([x, y])
               }
-            } 
+            }
           }
-        } 
+          bestMove = _getRandomElement(activateSpaces)
       }
+    }
     return bestMove
-}
+  }
 
   return {
     createBoard,
@@ -578,5 +591,11 @@ game.setupGame()
 // check what can be factored out or pushed up in the hierarchy of the game object
 
 
+// todo: 
+  // _confirmPotentialToIncrease() should be run for inactive player before active player
+
+
+  
 // stopped at:
-// todo: improve logic for increasing lead whenever possible (vs taking a simple "random location")
+  // exploring optimal turn three scenarios
+
